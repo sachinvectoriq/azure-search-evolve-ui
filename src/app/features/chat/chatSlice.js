@@ -51,6 +51,8 @@ const mapLanguageForAPI = (uiLanguage) => {
 export const sendQuestionToAPI = createAsyncThunk(
   "chat/sendQuestionToAPI",
   async (question, { dispatch, getState }) => {
+    // Dispatch the resetError action to clear any existing error messages
+    dispatch(resetError()); 
     const sessionId = getState().chat.sessionId;
     const userId = getState().chat.userId; // Get userId from state
 
@@ -391,6 +393,13 @@ const chatSlice = createSlice({
       state.userId = newId;
       console.log("User ID reset to:", newId);
     },
+    //reset error
+    setError: (state, action) => {
+    state.error = action.payload;
+    },
+    resetError: (state) => {
+    state.error = null;
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -423,6 +432,7 @@ export const {
   setFeedbackStatus,
   setIsResponding,
   setError,
+  resetError,
   clearChat,
   clearInput,
   resetToWelcome,
