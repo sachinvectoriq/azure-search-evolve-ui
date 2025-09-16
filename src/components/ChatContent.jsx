@@ -249,6 +249,7 @@ const ChatContent = ({ onViewPdf }) => {
     followUps,
     feedbackStatus,
     previewDocURL,
+    selectedLanguage
   } = useSelector((state) => state.chat);
   const [expandedCitations, setExpandedCitations] = useState({});
   const [copiedMessageId, setCopiedMessageId] = useState(null);
@@ -260,6 +261,73 @@ const ChatContent = ({ onViewPdf }) => {
   const containerRef = useRef(null);
   const isUserAtBottomRef = useRef(true);
   const dispatch = useDispatch();
+
+  // Language-based text content
+  const getText = (key) => {
+    const translations = {
+      thinking: {
+        en: 'Thinking...',
+        fr: 'Réflexion...'
+      },
+      citations: {
+        en: 'Citations:',
+        fr: 'Citations :'
+      },
+      followUpQuestions: {
+        en: 'Follow-up questions:',
+        fr: 'Questions de suivi :'
+      },
+      provideFeedback: {
+        en: 'Provide Feedback',
+        fr: 'Fournir des commentaires'
+      },
+      whatWasTheIssue: {
+        en: 'What was the issue with this response?',
+        fr: 'Quel était le problème avec cette réponse ?'
+      },
+      yourFeedbackHelps: {
+        en: 'Your feedback helps us improve...',
+        fr: 'Vos commentaires nous aident à nous améliorer...'
+      },
+      cancel: {
+        en: 'Cancel',
+        fr: 'Annuler'
+      },
+      submitFeedback: {
+        en: 'Submit Feedback',
+        fr: 'Envoyer les commentaires'
+      },
+      goodResponse: {
+        en: 'Good response',
+        fr: 'Bonne réponse'
+      },
+      badResponse: {
+        en: 'Bad response',
+        fr: 'Mauvaise réponse'
+      },
+      copyToClipboard: {
+        en: 'Copy to clipboard',
+        fr: 'Copier dans le presse-papiers'
+      },
+      copied: {
+        en: 'Copied!',
+        fr: 'Copié !'
+      },
+      show: {
+        en: 'Show',
+        fr: 'Afficher'
+      },
+      hide: {
+        en: 'Hide',
+        fr: 'Masquer'
+      },
+      errorMessage: {
+        en: 'Something went wrong, please try again later.',
+        fr: 'Quelque chose s\'est mal passé, veuillez réessayer plus tard.'
+      }
+    };
+    return translations[key][selectedLanguage] || translations[key]['en'];
+  };
 
   useEffect(() => {
     if (isUserAtBottomRef.current && bottomRef.current) {
@@ -411,7 +479,7 @@ const ChatContent = ({ onViewPdf }) => {
     return (
       <div className='flex justify-center items-center h-full'>
         <span className='text-lg text-red-500'>
-          Something went wrong, please try again later.
+          {getText('errorMessage')}
         </span>
       </div>
     );
@@ -428,7 +496,7 @@ const ChatContent = ({ onViewPdf }) => {
         <div className='fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4'>
           <div className='bg-white rounded-lg shadow-sm p-6 w-full max-w-lg'>
             <div className='flex justify-between items-center mb-4'>
-              <h3 className='text-lg font-medium'>Provide Feedback</h3>
+              <h3 className='text-lg font-medium'>{getText('provideFeedback')}</h3>
               <button
                 onClick={() => {
                   setShowFeedbackModal(false);
@@ -440,14 +508,14 @@ const ChatContent = ({ onViewPdf }) => {
               </button>
             </div>
             <p className='text-sm text-gray-600 mb-2'>
-              What was the issue with this response?
+              {getText('whatWasTheIssue')}
             </p>
             <textarea
               value={feedbackText}
               onChange={(e) => setFeedbackText(e.target.value)}
               className='w-full p-3 border border-gray-300 rounded-md mb-2 text-sm'
               rows='4'
-              placeholder='Your feedback helps us improve...'
+              placeholder={getText('yourFeedbackHelps')}
             />
             {feedbackError && (
               <p className='text-red-500 text-sm mb-2'>{feedbackError}</p>
@@ -460,14 +528,14 @@ const ChatContent = ({ onViewPdf }) => {
                 }}
                 className='px-4 py-2 border border-gray-300 rounded-md text-sm hover:bg-gray-50 cursor-pointer'
               >
-                Cancel
+                {getText('cancel')}
               </button>
               <button
                 onClick={handleSubmitFeedback}
                 className='px-4 py-2 bg-[#174a7e] text-white rounded-md text-sm hover:bg-[#082340] disabled:bg-[#92bde8] cursor-pointer'
                 disabled={!feedbackText.trim()}
               >
-                Submit Feedback
+                {getText('submitFeedback')}
               </button>
             </div>
           </div>
@@ -521,7 +589,7 @@ const ChatContent = ({ onViewPdf }) => {
                           ? 'text-green-500 fill-green-500'
                           : 'text-gray-500 hover:text-green-500'
                       }`}
-                      title='Good response'
+                      title={getText('goodResponse')}
                       disabled={feedbackStatus[message.id]?.submitted}
                     >
                       <ThumbsUp size={16} />
@@ -533,7 +601,7 @@ const ChatContent = ({ onViewPdf }) => {
                           ? 'text-red-500 fill-red-500'
                           : 'text-gray-500 hover:text-red-500'
                       }`}
-                      title='Bad response'
+                      title={getText('badResponse')}
                       disabled={feedbackStatus[message.id]?.submitted}
                     >
                       <ThumbsDown size={16} />
@@ -546,7 +614,7 @@ const ChatContent = ({ onViewPdf }) => {
                         message.id
                       )
                     }
-                    title='Copy to clipboard'
+                    title={getText('copyToClipboard')}
                     className='flex items-center cursor-pointer'
                   >
                     <FileText
@@ -555,7 +623,7 @@ const ChatContent = ({ onViewPdf }) => {
                     />
                     {copiedMessageId === message.id && (
                       <span className='text-xs text-gray-500 ml-1'>
-                        Copied!
+                        {getText('copied')}
                       </span>
                     )}
                   </button>
@@ -566,7 +634,7 @@ const ChatContent = ({ onViewPdf }) => {
                 {message.id === pendingMessageId &&
                 message.content === '...' ? (
                   <span className='animate-pulse text-gray-400'>
-                    Thinking...
+                    {getText('thinking')}
                   </span>
                 ) : (
                   <div
@@ -609,7 +677,7 @@ const ChatContent = ({ onViewPdf }) => {
 
               {referencedCitations.length > 0 && (
                 <div className='mt-4'>
-                  <h3 className='font-semibold text-sm mb-2'>Citations:</h3>
+                  <h3 className='font-semibold text-sm mb-2'>{getText('citations')}</h3>
                   <div className='flex flex-col gap-2'>
                     {referencedCitations.map((citation) => {
                       const isExpanded =
@@ -642,7 +710,7 @@ const ChatContent = ({ onViewPdf }) => {
                               }
                               className='absolute bottom-1 right-2 text-blue-500 hover:text-blue-700 transition-colors text-xs bg-white px-1 z-20 cursor-pointer'
                             >
-                              {isExpanded ? 'Hide' : 'Show'}
+                              {isExpanded ? getText('hide') : getText('show')}
                             </button>
                           )}
 
@@ -663,7 +731,7 @@ const ChatContent = ({ onViewPdf }) => {
               {showFollowUps && (
                 <div className='mt-4 p-3 bg-gray-50 rounded-md border border-gray-200'>
                   <h3 className='text-sm font-semibold mb-2'>
-                    Follow-up questions:
+                    {getText('followUpQuestions')}
                   </h3>
                   <div className='flex flex-wrap gap-2'>
                     {followUps.map((question, index) => (
