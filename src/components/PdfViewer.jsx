@@ -1,9 +1,54 @@
 import React, { useState } from 'react';
 import { FiDownload, FiExternalLink, FiX } from 'react-icons/fi';
+import { useSelector } from 'react-redux';
 
 const PdfViewer = ({ url, onClose }) => {
   const [hasError, setHasError] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const selectedLanguage = useSelector((state) => state.chat.selectedLanguage);
+
+  // Language-based text content
+  const getText = (key) => {
+    const translations = {
+      documentViewer: {
+        en: 'Document Viewer',
+        fr: 'Visionneuse de documents'
+      },
+      download: {
+        en: 'Download',
+        fr: 'Télécharger'
+      },
+      close: {
+        en: 'Close',
+        fr: 'Fermer'
+      },
+      noDocumentURL: {
+        en: 'No document URL provided.',
+        fr: 'Aucune URL de document fournie.'
+      },
+      previewNotAvailable: {
+        en: 'Preview not available for this file type',
+        fr: 'Aperçu non disponible pour ce type de fichier'
+      },
+      downloadFile: {
+        en: 'Download File',
+        fr: 'Télécharger le fichier'
+      },
+      loadingDocument: {
+        en: 'Loading document...',
+        fr: 'Chargement du document...'
+      },
+      failedToLoad: {
+        en: 'Failed to load document',
+        fr: 'Échec du chargement du document'
+      },
+      downloadInstead: {
+        en: 'Download Instead',
+        fr: 'Télécharger à la place'
+      }
+    };
+    return translations[key][selectedLanguage] || translations[key]['en'];
+  };
 
   const handleDownload = async (e) => {
     e.preventDefault();
@@ -30,7 +75,7 @@ const PdfViewer = ({ url, onClose }) => {
   };
 
   const getViewerContent = () => {
-    if (!url) return <p>No document URL provided.</p>;
+    if (!url) return <p>{getText('noDocumentURL')}</p>;
 
     const fileExtension = url.split('.').pop().toLowerCase();
     const officeViewerUrl = `https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(
@@ -66,12 +111,12 @@ const PdfViewer = ({ url, onClose }) => {
       default:
         return (
           <div className='flex flex-col items-center justify-center h-full'>
-            <p className='mb-4'>Preview not available for this file type</p>
+            <p className='mb-4'>{getText('previewNotAvailable')}</p>
             <button
               onClick={handleDownload}
               className='flex items-center gap-2 text-blue-600 hover:underline'
             >
-              <FiDownload /> Download File
+              <FiDownload /> {getText('downloadFile')}
             </button>
           </div>
         );
@@ -81,7 +126,7 @@ const PdfViewer = ({ url, onClose }) => {
   return (
     <div className='p-2 h-full rounded-md flex flex-col'>
       <div className='flex justify-between items-center mb-4'>
-        <h3 className='text-xl font-semibold'>Document Viewer</h3>
+        <h3 className='text-xl font-semibold'>{getText('documentViewer')}</h3>
         <div className='flex items-center gap-3'>
           {url && (
             <button onClick={openInNewTab}>
@@ -92,14 +137,14 @@ const PdfViewer = ({ url, onClose }) => {
             </button>
           )}
           {url && (
-            <button onClick={handleDownload} title='Download'>
+            <button onClick={handleDownload} title={getText('download')}>
               <FiDownload
                 size={18}
                 className='text-gray-600 hover:text-gray-800'
               />
             </button>
           )}
-          <button onClick={onClose} title='Close'>
+          <button onClick={onClose} title={getText('close')}>
             <FiX size={20} className='text-gray-600 hover:text-gray-800' />
           </button>
         </div>
@@ -108,18 +153,18 @@ const PdfViewer = ({ url, onClose }) => {
       <div className='flex-1 relative'>
         {isLoading && !hasError && (
           <div className='absolute inset-0 flex items-center justify-center'>
-            <p className='text-gray-600'>Loading document...</p>
+            <p className='text-gray-600'>{getText('loadingDocument')}</p>
           </div>
         )}
 
         {hasError ? (
           <div className='h-full flex flex-col items-center justify-center'>
-            <p className='text-red-600 mb-4'>Failed to load document</p>
+            <p className='text-red-600 mb-4'>{getText('failedToLoad')}</p>
             <button
               onClick={handleDownload}
               className='flex items-center gap-2 text-blue-600 hover:underline'
             >
-              <FiDownload /> Download Instead
+              <FiDownload /> {getText('downloadInstead')}
             </button>
           </div>
         ) : (
