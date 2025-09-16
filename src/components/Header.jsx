@@ -37,7 +37,7 @@ const Header = () => {
     if (isSettingsPage) {
       navigate('/home');
     } else {
-      navigate('/settings2');
+      navigate('/settings');
     }
   };
 
