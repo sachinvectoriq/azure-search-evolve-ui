@@ -12,7 +12,7 @@ const Header = () => {
   const helpDropdownRef = useRef(null);
   const hoverTimeoutRef = useRef(null);
 
-  const isSettingsPage = location.pathname === '/settings2';
+  const isSettingsPage = location.pathname === '/settings';
 
   useEffect(() => {
     const handleClickOutside = (event) => {
