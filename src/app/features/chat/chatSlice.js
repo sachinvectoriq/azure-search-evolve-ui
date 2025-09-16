@@ -383,7 +383,7 @@ const chatSlice = createSlice({
       const newId = Date.now().toString();
       sessionStorage.setItem("session_id", newId);
       state.sessionId = newId;
-      console.log("Session ID reset to:", newId);
+      //console.log("Session ID reset to:", newId);
       state.isResponding = false;
     },
     // New reducer to reset UserID
@@ -394,7 +394,7 @@ const chatSlice = createSlice({
         Math.random().toString(36).substring(2, 8);
       localStorage.setItem("user_id", newId);
       state.userId = newId;
-      console.log("User ID reset to:", newId);
+      //console.log("User ID reset to:", newId);
     },
   },
   extraReducers: (builder) => {
