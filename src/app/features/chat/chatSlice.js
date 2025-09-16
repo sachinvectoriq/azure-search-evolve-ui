@@ -2,6 +2,9 @@ import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import axios from "axios";
 import apiClient from "../../../services/apiClient";
 import { toast } from "react-toastify";
+// Import from auth slice to access user details
+import { useSelector } from 'react-redux';
+
 
 let getSessionId = () => {
   let id = sessionStorage.getItem("session_id");
@@ -51,14 +54,13 @@ const mapLanguageForAPI = (uiLanguage) => {
 export const sendQuestionToAPI = createAsyncThunk(
   "chat/sendQuestionToAPI",
   async (question, { dispatch, getState }) => {
-    // Dispatch the resetError action to clear any existing error messages
-    dispatch(resetError()); 
     const sessionId = getState().chat.sessionId;
     const userId = getState().chat.userId; // Get userId from state
 
-    const userName = "Test User";
-    // END - Change for userName here
-    const loginSessionId = "123456789"; // Changed from int to string
+    const auth = getState().auth;
+    const userName = auth.user?.name || "Anonymous";
+    const loginSessionId = auth.login_session_id || "";
+
     const selectedLanguage = getState().chat.selectedLanguage; // Get selected language
 
     console.log("Sending question to API:", question);
@@ -201,9 +203,10 @@ export const submitFeedback = createAsyncThunk(
     const userId = getState().chat.userId; // Get userId from state
 
     //Updated
-    const userName = "Test User";
+    const auth = getState().auth;
+    const userName = auth.user?.name || "Anonymous";
+    const loginSessionId = auth.login_session_id || "";
 
-    const loginSessionId = "123456789"; // Changed from int to string
 
 
     const message = messages.find((msg) => msg.id === messageId);
@@ -393,13 +396,6 @@ const chatSlice = createSlice({
       state.userId = newId;
       console.log("User ID reset to:", newId);
     },
-    //reset error
-    setError: (state, action) => {
-    state.error = action.payload;
-    },
-    resetError: (state) => {
-    state.error = null;
-    },
   },
   extraReducers: (builder) => {
     builder
@@ -432,7 +428,6 @@ export const {
   setFeedbackStatus,
   setIsResponding,
   setError,
-  resetError,
   clearChat,
   clearInput,
   resetToWelcome,
