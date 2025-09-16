@@ -1,45 +1,21 @@
 // src/pages/SettingPage.jsx
 import React, { useEffect, useState } from 'react';
-import { useSelector } from 'react-redux';
-import { useNavigate } from 'react-router-dom';
+import { useSelector } from 'react-redux'; // Added
+import { useNavigate } from 'react-router-dom'; // Added
 import Header from '../components/Header';
 
 const API_BASE = 'https://app-azuresearch-qa-evolve.azurewebsites.net';
 
 const SettingPage = () => {
-  const navigate = useNavigate();
+  const navigate = useNavigate(); // Added
 
   // Get dynamic values from Redux
-  const user = useSelector(state => state.auth.user);
-  const selectedLanguage = useSelector((state) => state.chat.selectedLanguage); // Add language selector
-  const rawUserName = user?.name;
+  const user = useSelector(state => state.auth.user); // Added
+  const rawUserName = user?.name; // Added
   const userName = (Array.isArray(rawUserName) && rawUserName.length > 0)
                       ? rawUserName[0]
-                      : rawUserName || 'Anonymous';
-  const loginSessionId = useSelector(state => state.auth.login_session_id);
-
-  // Language-based text content (only for loading/error messages, keeping settings in English)
-  const getText = (key) => {
-    const translations = {
-      loadingSettings: {
-        en: 'Loading settings...',
-        fr: 'Chargement des paramètres...'
-      },
-      error: {
-        en: 'Error!',
-        fr: 'Erreur !'
-      },
-      saving: {
-        en: 'Saving...',
-        fr: 'Enregistrement...'
-      },
-      savingMessage: {
-        en: 'Please wait while we update your settings.',
-        fr: 'Veuillez patienter pendant que nous mettons à jour vos paramètres.'
-      }
-    };
-    return translations[key][selectedLanguage] || translations[key]['en'];
-  };
+                      : rawUserName || 'Anonymous'; // Added
+  const loginSessionId = useSelector(state => state.auth.login_session_id); // Added
 
   // --- ADMIN ACCESS CHECK ---
   useEffect(() => {
@@ -170,9 +146,9 @@ const SettingPage = () => {
     <div className="min-h-screen bg-[#f7f9fc]">
       <Header />
       <div className="max-w-4xl mx-auto p-8 space-y-10">
-        {isLoading && <LoadingSpinner getText={getText} />}
-        {error && <ErrorBanner message={error} onClose={() => setError(null)} getText={getText} />}
-        {isSaving && <SavingBanner getText={getText} />}
+        {isLoading && <LoadingSpinner />}
+        {error && <ErrorBanner message={error} onClose={() => setError(null)} />}
+        {isSaving && <SavingBanner />}
 
         {!isLoading && (
           <>
@@ -320,29 +296,29 @@ const SettingPage = () => {
 };
 
 /* ----------------- SMALL COMPONENTS ------------------ */
-// Updated components to support French language
+// Same as before — no changes needed for these
 
-const LoadingSpinner = ({ getText }) => (
+const LoadingSpinner = () => (
   <div className="flex justify-center items-center py-12">
     <div className="text-center">
       <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-      <div className="text-lg font-semibold text-blue-600">{getText('loadingSettings')}</div>
+      <div className="text-lg font-semibold text-blue-600">Loading settings...</div>
     </div>
   </div>
 );
 
-const ErrorBanner = ({ message, onClose, getText }) => (
+const ErrorBanner = ({ message, onClose }) => (
   <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative">
-    <strong className="font-bold">{getText('error')}</strong>
+    <strong className="font-bold">Error!</strong>
     <span className="block sm:inline"> {message}</span>
     <button onClick={onClose} className="absolute top-0 bottom-0 right-0 px-4 py-3">×</button>
   </div>
 );
 
-const SavingBanner = ({ getText }) => (
+const SavingBanner = () => (
   <div className="bg-blue-100 border border-blue-400 text-blue-700 px-4 py-3 rounded">
-    <strong className="font-bold">{getText('saving')}</strong>
-    <span className="block sm:inline"> {getText('savingMessage')}</span>
+    <strong className="font-bold">Saving...</strong>
+    <span className="block sm:inline"> Please wait while we update your settings.</span>
   </div>
 );
 
