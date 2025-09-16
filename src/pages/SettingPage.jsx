@@ -1,10 +1,29 @@
 // src/pages/SettingPage.jsx
 import React, { useEffect, useState } from 'react';
+import { useSelector } from 'react-redux'; // Added
+import { useNavigate } from 'react-router-dom'; // Added
 import Header from '../components/Header';
 
 const API_BASE = 'https://app-azuresearch-qa-evolve.azurewebsites.net';
 
 const SettingPage = () => {
+  const navigate = useNavigate(); // Added
+
+  // Get dynamic values from Redux
+  const user = useSelector(state => state.auth.user); // Added
+  const rawUserName = user?.name; // Added
+  const userName = (Array.isArray(rawUserName) && rawUserName.length > 0)
+                      ? rawUserName[0]
+                      : rawUserName || 'Anonymous'; // Added
+  const loginSessionId = useSelector(state => state.auth.login_session_id); // Added
+
+  // --- ADMIN ACCESS CHECK ---
+  useEffect(() => {
+    if (user && user.group !== 'admin') {
+      navigate('/home');
+    }
+  }, [user, navigate]);
+
   const [formData, setFormData] = useState({
     azure_search_endpoint: '',
     azure_search_index_name: '',
@@ -29,8 +48,13 @@ const SettingPage = () => {
   const [error, setError] = useState(null);
   const [isSaving, setIsSaving] = useState(false);
 
-  // Fetch settings from API
+  // Fetch settings from API only if user is admin
   useEffect(() => {
+    if (!user || user.group !== 'admin') {
+      setIsLoading(false);
+      return;
+    }
+
     fetch(`${API_BASE}/get_settings`)
       .then(res => {
         if (!res.ok) throw new Error(`Failed to fetch settings: ${res.status}`);
@@ -42,63 +66,63 @@ const SettingPage = () => {
       })
       .catch(err => setError(err.message))
       .finally(() => setIsLoading(false));
-  }, []);
+  }, [user]);
 
   const updateField = (field, value) =>
     setFormData(prev => ({ ...prev, [field]: value }));
 
   const postSettings = async () => {
-  setIsSaving(true);
-  setError(null);
+    setIsSaving(true);
+    setError(null);
 
-  const allowedKeys = [
-    'azure_search_endpoint',
-    'azure_search_index_name',
-    'current_prompt',
-    'openai_model_deployment_name',
-    'openai_endpoint',
-    'openai_api_version',
-    'openai_model_temperature',
-    'openai_api_key',
-    'semantic_configuration_name',
-    'azure_search_index_name_french',
-    'current_prompt_french'
-  ];
+    const allowedKeys = [
+      'azure_search_endpoint',
+      'azure_search_index_name',
+      'current_prompt',
+      'openai_model_deployment_name',
+      'openai_endpoint',
+      'openai_api_version',
+      'openai_model_temperature',
+      'openai_api_key',
+      'semantic_configuration_name',
+      'azure_search_index_name_french',
+      'current_prompt_french'
+    ];
 
-  const body = new URLSearchParams();
-  allowedKeys.forEach(k => {
-    if (formData[k] !== undefined) {
-      body.append(k, formData[k]);
-    }
-  });
-
-  // Only append these once
-  body.append('user_name', 'test');
-  body.append('login_session_id', '2');
-
-  try {
-    const response = await fetch(`${API_BASE}/update_settings`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: body.toString(),
+    const body = new URLSearchParams();
+    allowedKeys.forEach(k => {
+      if (formData[k] !== undefined) {
+        body.append(k, formData[k]);
+      }
     });
 
-    if (!response.ok) {
-      const errData = await response.json();
-      throw new Error(errData.message || `Failed to update settings`);
-    }
+    // Append user details dynamically
+    body.append('user_name', userName);
+    body.append('login_session_id', loginSessionId);
 
-    const successMsg = await response.json();
-    console.log('Update successful:', successMsg);
-    setOriginalData({ ...formData });
-    return true;
-  } catch (err) {
-    setError(err.message);
-    return false;
-  } finally {
-    setIsSaving(false);
-  }
-};
+    try {
+      const response = await fetch(`${API_BASE}/update_settings`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: body.toString(),
+      });
+
+      if (!response.ok) {
+        const errData = await response.json();
+        throw new Error(errData.message || `Failed to update settings`);
+      }
+
+      const successMsg = await response.json();
+      console.log('Update successful:', successMsg);
+      setOriginalData({ ...formData });
+      return true;
+    } catch (err) {
+      setError(err.message);
+      return false;
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   const saveSection = async (setter) => {
     if (await postSettings()) setter(false);
@@ -112,6 +136,11 @@ const SettingPage = () => {
     });
     setter(false);
   };
+
+  // Don't render the page if user is not admin or not loaded
+  if (!user || user.group !== 'admin') {
+    return null;
+  }
 
   return (
     <div className="min-h-screen bg-[#f7f9fc]">
@@ -267,6 +296,8 @@ const SettingPage = () => {
 };
 
 /* ----------------- SMALL COMPONENTS ------------------ */
+// Same as before — no changes needed for these
+
 const LoadingSpinner = () => (
   <div className="flex justify-center items-center py-12">
     <div className="text-center">
