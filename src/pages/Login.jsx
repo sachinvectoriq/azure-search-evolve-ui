@@ -8,15 +8,16 @@ const Login = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // console.log('token: ', token);
-    // if (token) console.log('is token valid: ', isTokenValid(token));
-    // if (token) {
-    navigate('/home');
-    // } else {
-    //   window.location.href =
-    //     import.meta.env.VITE_LOGIN_URI ||
-    //     'https://qa-azure-search.azurewebsites.net/saml/login';
-    // }
+    console.log('token: ', token);
+    if (token) console.log('is token valid: ', isTokenValid(token));
+    if (token && isTokenValid(token)) {
+      navigate('/home');
+    } else {
+      localStorage.clear(); // remove credentials if not valid
+      window.location.href =
+        import.meta.env.VITE_LOGIN_URI ||
+        'https://app-azuresearch-qa-evolve.azurewebsites.net/saml/login';
+    }
   }, [token]);
 
   return (
