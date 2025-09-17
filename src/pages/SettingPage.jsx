@@ -8,10 +8,34 @@ const API_BASE = 'https://app-azuresearch-qa-evolve.azurewebsites.net';
 const SettingPage = () => {
   // Get dynamic auth values from Redux store (similar to chatSlice.js)
   const auth = useSelector(state => state.auth);
-  const userName = auth.user?.name || "Anonymous";
-  const loginSessionId = auth.login_session_id || "";
+  
+  // Debug the entire auth state to understand its structure
+  console.log("Full auth state:", auth);
+  
+  // Based on your auth slice structure:
+  const userName = auth?.user?.name || "Anonymous";
+  const loginSessionId = auth?.login_session_id || "";
+  
+  // Also check localStorage directly as fallback
+  const userNameFromStorage = localStorage.getItem("name") ? JSON.parse(localStorage.getItem("name")) : null;
+  const loginSessionIdFromStorage = localStorage.getItem("login_session_id") ? JSON.parse(localStorage.getItem("login_session_id")) : null;
+  
+  // Use fallbacks if Redux state is empty
+  const finalUserName = userName !== "Anonymous" ? userName : userNameFromStorage || "Anonymous";
+  const finalLoginSessionId = loginSessionId || loginSessionIdFromStorage || "";
 
-  const [formData, setFormData] = useState({
+  // Debug log to verify auth values
+  useEffect(() => {
+    console.log("=== AUTH DEBUG INFO ===");
+    console.log("Auth state structure:", JSON.stringify(auth, null, 2));
+    console.log("Redux userName:", userName);
+    console.log("Redux loginSessionId:", loginSessionId);
+    console.log("Storage userName:", userNameFromStorage);
+    console.log("Storage loginSessionId:", loginSessionIdFromStorage);
+    console.log("Final userName:", finalUserName);
+    console.log("Final loginSessionId:", finalLoginSessionId);
+    console.log("======================");
+  }, [auth, userName, loginSessionId, userNameFromStorage, loginSessionIdFromStorage, finalUserName, finalLoginSessionId]);
     azure_search_endpoint: '',
     azure_search_index_name: '',
     current_prompt: '',
@@ -38,8 +62,14 @@ const SettingPage = () => {
 
   // Debug log to verify auth values
   useEffect(() => {
-    console.log("Auth values - User Name:", userName, "Login Session ID:", loginSessionId);
-  }, [userName, loginSessionId]);
+    console.log("=== AUTH DEBUG INFO ===");
+    console.log("Auth state structure:", JSON.stringify(auth, null, 2));
+    console.log("User Name extracted:", userName);
+    console.log("Login Session ID extracted:", loginSessionId);
+    console.log("Is userName default?", userName === "Anonymous");
+    console.log("Is loginSessionId empty?", loginSessionId === "");
+    console.log("======================");
+  }, [auth, userName, loginSessionId]);
 
   // Fetch settings from API
   useEffect(() => {
@@ -85,11 +115,19 @@ const SettingPage = () => {
       }
     });
 
-    // Use dynamic values instead of hardcoded ones
-    body.append('user_name', userName);
-    body.append('login_session_id', loginSessionId);
+    // Use the final values (with fallbacks) instead of hardcoded ones
+    body.append('user_name', finalUserName);
+    body.append('login_session_id', finalLoginSessionId);
 
-    console.log("Sending settings update with - User Name:", userName, "Login Session ID:", loginSessionId);
+    console.log("=== API CALL DEBUG ===");
+    console.log("Redux userName:", userName);
+    console.log("Redux loginSessionId:", loginSessionId);
+    console.log("Storage userName:", userNameFromStorage);
+    console.log("Storage loginSessionId:", loginSessionIdFromStorage);
+    console.log("Final userName being sent:", finalUserName);
+    console.log("Final loginSessionId being sent:", finalLoginSessionId);
+    console.log("Full request body:", body.toString());
+    console.log("=====================");
 
     try {
       const response = await fetch(`${API_BASE}/update_settings`, {
@@ -129,7 +167,7 @@ const SettingPage = () => {
   };
 
   // Show warning if auth values are missing
-  const showAuthWarning = !userName || userName === "Anonymous" || !loginSessionId;
+  const showAuthWarning = !finalUserName || finalUserName === "Anonymous" || !finalLoginSessionId;
 
   return (
     <div className="min-h-screen bg-[#f7f9fc]">
@@ -139,16 +177,22 @@ const SettingPage = () => {
         {error && <ErrorBanner message={error} onClose={() => setError(null)} />}
         {isSaving && <SavingBanner />}
         
-        {/* Auth Warning Banner */}
-        {showAuthWarning && (
-          <div className="bg-yellow-100 border border-yellow-400 text-yellow-700 px-4 py-3 rounded">
-            <strong className="font-bold">Authentication Warning!</strong>
+        {/* Auth Info Banner - Always show for debugging */}
+        <div className={`px-4 py-3 rounded border ${showAuthWarning ? 'bg-yellow-100 border-yellow-400 text-yellow-700' : 'bg-green-100 border-green-400 text-green-700'}`}>
+          <strong className="font-bold">
+            {showAuthWarning ? 'Authentication Warning!' : 'Authentication Status: OK'}
+          </strong>
+          {showAuthWarning && (
             <span className="block sm:inline"> User authentication data is missing or incomplete. Settings changes may not be properly tracked.</span>
-            <div className="text-sm mt-1">
-              Current User: {userName} | Session ID: {loginSessionId || "Not set"}
+          )}
+          <div className="text-sm mt-1">
+            <div>Current User: <code className="bg-gray-200 px-1 rounded">{finalUserName}</code></div>
+            <div>Session ID: <code className="bg-gray-200 px-1 rounded">{finalLoginSessionId || "Not set"}</code></div>
+            <div className="text-xs mt-1 opacity-75">
+              Check browser console for detailed auth state debugging info
             </div>
           </div>
-        )}
+        </div>
 
         {!isLoading && (
           <>
