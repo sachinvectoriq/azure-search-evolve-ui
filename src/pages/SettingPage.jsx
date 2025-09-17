@@ -25,17 +25,7 @@ const SettingPage = () => {
   const finalLoginSessionId = loginSessionId || loginSessionIdFromStorage || "";
 
   // Debug log to verify auth values
-  useEffect(() => {
-    console.log("=== AUTH DEBUG INFO ===");
-    console.log("Auth state structure:", JSON.stringify(auth, null, 2));
-    console.log("Redux userName:", userName);
-    console.log("Redux loginSessionId:", loginSessionId);
-    console.log("Storage userName:", userNameFromStorage);
-    console.log("Storage loginSessionId:", loginSessionIdFromStorage);
-    console.log("Final userName:", finalUserName);
-    console.log("Final loginSessionId:", finalLoginSessionId);
-    console.log("======================");
-  }, [auth, userName, loginSessionId, userNameFromStorage, loginSessionIdFromStorage, finalUserName, finalLoginSessionId]);
+  const [formData, setFormData] = useState({
     azure_search_endpoint: '',
     azure_search_index_name: '',
     current_prompt: '',
