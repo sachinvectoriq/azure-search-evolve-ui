@@ -57,10 +57,9 @@ const SettingPage = () => {
     openai_api_version: '',
     openai_model_temperature: '',
     openai_api_key: '',
-    semantic_configuration_name_english: '',
+    semantic_configuration_name: '',
     azure_search_index_name_french: '',
-    current_prompt_french: '',
-    semantic_configuration_name_french: '' // Added
+    current_prompt_french: ''
   });
 
   const [originalData, setOriginalData] = useState({});
@@ -109,10 +108,9 @@ const SettingPage = () => {
       'openai_api_version',
       'openai_model_temperature',
       'openai_api_key',
-      'semantic_configuration_name_english',
+      'semantic_configuration_name',
       'azure_search_index_name_french',
-      'current_prompt_french',
-      'semantic_configuration_name_french' // Added
+      'current_prompt_french'
     ];
 
     const body = new URLSearchParams();
@@ -215,34 +213,17 @@ const SettingPage = () => {
             <SectionCard title="Semantic Model Parameters">
               <LabelledInput
                 disabled={!semanticEdit}
-                label="English Semantic Configuration Name" // Changed
-                value={formData.semantic_configuration_name_english} // Changed
-                onChange={(v) =>
-                  updateField("semantic_configuration_name_english", v)
-                } // Changed
-              />
-              <LabelledInput // New LabelledInput
-                disabled={!semanticEdit}
-                label="French Semantic Configuration Name"
-                value={formData.semantic_configuration_name_french}
-                onChange={(v) =>
-                  updateField("semantic_configuration_name_french", v)
-                }
+                label="Semantic Configuration Name"
+                value={formData.semantic_configuration_name}
+                onChange={v => updateField('semantic_configuration_name', v)}
               />
               {!semanticEdit ? (
                 <ChangeButton onClick={() => setSemanticEdit(true)} />
               ) : (
                 <ActionButtons
                   onSave={() => saveSection(setSemanticEdit)}
-                  onCancel={
-                    () =>
-                      cancelSection(
-                        [
-                          "semantic_configuration_name_english",
-                          "semantic_configuration_name_french",
-                        ],
-                        setSemanticEdit
-                      ) // Changed
+                  onCancel={() =>
+                    cancelSection(['semantic_configuration_name'], setSemanticEdit)
                   }
                   disabled={isSaving}
                 />
