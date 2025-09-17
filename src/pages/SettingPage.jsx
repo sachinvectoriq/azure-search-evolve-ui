@@ -1,30 +1,10 @@
 // src/pages/SettingPage.jsx
 import React, { useEffect, useState } from 'react';
-import { useSelector } from 'react-redux';
 import Header from '../components/Header';
 
 const API_BASE = 'https://app-azuresearch-qa-evolve.azurewebsites.net';
 
 const SettingPage = () => {
-  // Get dynamic auth values from Redux store (similar to chatSlice.js)
-  const auth = useSelector(state => state.auth);
-  
-  // Debug the entire auth state to understand its structure
-  console.log("Full auth state:", auth);
-  
-  // Based on your auth slice structure:
-  const userName = auth?.user?.name || "Anonymous";
-  const loginSessionId = auth?.login_session_id || "";
-  
-  // Also check localStorage directly as fallback
-  const userNameFromStorage = localStorage.getItem("name") ? JSON.parse(localStorage.getItem("name")) : null;
-  const loginSessionIdFromStorage = localStorage.getItem("login_session_id") ? JSON.parse(localStorage.getItem("login_session_id")) : null;
-  
-  // Use fallbacks if Redux state is empty
-  const finalUserName = userName !== "Anonymous" ? userName : userNameFromStorage || "Anonymous";
-  const finalLoginSessionId = loginSessionId || loginSessionIdFromStorage || "";
-
-  // Debug log to verify auth values
   const [formData, setFormData] = useState({
     azure_search_endpoint: '',
     azure_search_index_name: '',
@@ -50,17 +30,6 @@ const SettingPage = () => {
   const [error, setError] = useState(null);
   const [isSaving, setIsSaving] = useState(false);
 
-  // Debug log to verify auth values
-  useEffect(() => {
-    console.log("=== AUTH DEBUG INFO ===");
-    console.log("Auth state structure:", JSON.stringify(auth, null, 2));
-    console.log("User Name extracted:", userName);
-    console.log("Login Session ID extracted:", loginSessionId);
-    console.log("Is userName default?", userName === "Anonymous");
-    console.log("Is loginSessionId empty?", loginSessionId === "");
-    console.log("======================");
-  }, [auth, userName, loginSessionId]);
-
   // Fetch settings from API
   useEffect(() => {
     fetch(`${API_BASE}/get_settings`)
@@ -80,68 +49,58 @@ const SettingPage = () => {
     setFormData(prev => ({ ...prev, [field]: value }));
 
   const postSettings = async () => {
-    setIsSaving(true);
-    setError(null);
+  setIsSaving(true);
+  setError(null);
 
-    const allowedKeys = [
-      'azure_search_endpoint',
-      'azure_search_index_name',
-      'current_prompt',
-      'openai_model_deployment_name',
-      'openai_endpoint',
-      'openai_api_version',
-      'openai_model_temperature',
-      'openai_api_key',
-      'semantic_configuration_name_english',  // Changed to match API
-      'azure_search_index_name_french',
-      'current_prompt_french',
-      'semantic_configuration_name_french'  // Added French semantic configuration to allowed keys
-    ];
+  const allowedKeys = [
+    'azure_search_endpoint',
+    'azure_search_index_name',
+    'current_prompt',
+    'openai_model_deployment_name',
+    'openai_endpoint',
+    'openai_api_version',
+    'openai_model_temperature',
+    'openai_api_key',
+    'semantic_configuration_name_english',  // Changed to match API
+    'azure_search_index_name_french',
+    'current_prompt_french',
+    'semantic_configuration_name_french'  // Added French semantic configuration to allowed keys
+  ];
 
-    const body = new URLSearchParams();
-    allowedKeys.forEach(k => {
-      if (formData[k] !== undefined) {
-        body.append(k, formData[k]);
-      }
+  const body = new URLSearchParams();
+  allowedKeys.forEach(k => {
+    if (formData[k] !== undefined) {
+      body.append(k, formData[k]);
+    }
+  });
+
+  // Only append these once
+  body.append('user_name', 'test');
+  body.append('login_session_id', '2');
+
+  try {
+    const response = await fetch(`${API_BASE}/update_settings`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: body.toString(),
     });
 
-    // Use the final values (with fallbacks) instead of hardcoded ones
-    body.append('user_name', finalUserName);
-    body.append('login_session_id', finalLoginSessionId);
-
-    console.log("=== API CALL DEBUG ===");
-    console.log("Redux userName:", userName);
-    console.log("Redux loginSessionId:", loginSessionId);
-    console.log("Storage userName:", userNameFromStorage);
-    console.log("Storage loginSessionId:", loginSessionIdFromStorage);
-    console.log("Final userName being sent:", finalUserName);
-    console.log("Final loginSessionId being sent:", finalLoginSessionId);
-    console.log("Full request body:", body.toString());
-    console.log("=====================");
-
-    try {
-      const response = await fetch(`${API_BASE}/update_settings`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: body.toString(),
-      });
-
-      if (!response.ok) {
-        const errData = await response.json();
-        throw new Error(errData.message || `Failed to update settings`);
-      }
-
-      const successMsg = await response.json();
-      console.log('Update successful:', successMsg);
-      setOriginalData({ ...formData });
-      return true;
-    } catch (err) {
-      setError(err.message);
-      return false;
-    } finally {
-      setIsSaving(false);
+    if (!response.ok) {
+      const errData = await response.json();
+      throw new Error(errData.message || `Failed to update settings`);
     }
-  };
+
+    const successMsg = await response.json();
+    console.log('Update successful:', successMsg);
+    setOriginalData({ ...formData });
+    return true;
+  } catch (err) {
+    setError(err.message);
+    return false;
+  } finally {
+    setIsSaving(false);
+  }
+};
 
   const saveSection = async (setter) => {
     if (await postSettings()) setter(false);
@@ -156,9 +115,6 @@ const SettingPage = () => {
     setter(false);
   };
 
-  // Show warning if auth values are missing
-  const showAuthWarning = !finalUserName || finalUserName === "Anonymous" || !finalLoginSessionId;
-
   return (
     <div className="min-h-screen bg-[#f7f9fc]">
       <Header />
@@ -166,23 +122,6 @@ const SettingPage = () => {
         {isLoading && <LoadingSpinner />}
         {error && <ErrorBanner message={error} onClose={() => setError(null)} />}
         {isSaving && <SavingBanner />}
-        
-        {/* Auth Info Banner - Always show for debugging */}
-        <div className={`px-4 py-3 rounded border ${showAuthWarning ? 'bg-yellow-100 border-yellow-400 text-yellow-700' : 'bg-green-100 border-green-400 text-green-700'}`}>
-          <strong className="font-bold">
-            {showAuthWarning ? 'Authentication Warning!' : 'Authentication Status: OK'}
-          </strong>
-          {showAuthWarning && (
-            <span className="block sm:inline"> User authentication data is missing or incomplete. Settings changes may not be properly tracked.</span>
-          )}
-          <div className="text-sm mt-1">
-            <div>Current User: <code className="bg-gray-200 px-1 rounded">{finalUserName}</code></div>
-            <div>Session ID: <code className="bg-gray-200 px-1 rounded">{finalLoginSessionId || "Not set"}</code></div>
-            <div className="text-xs mt-1 opacity-75">
-              Check browser console for detailed auth state debugging info
-            </div>
-          </div>
-        </div>
 
         {!isLoading && (
           <>
