@@ -203,7 +203,7 @@ const ChatForm = () => {
 
   const getPlaceholderText = () => {
     if (showLanguageSwitchWarning) return '';
-    if (isResponding) return 'Please wait for the response...';
+    if (isResponding) return getText('pleaseWaitResponse');
     return selectedLanguage === 'fr' 
       ? 'Tapez votre question en français...' 
       : 'Type a new question...';
@@ -211,6 +211,35 @@ const ChatForm = () => {
 
   const getLanguageName = (code) => {
     return code === 'en' ? 'English' : 'French';
+  };
+
+  // Language-based text content for UI elements
+  const getText = (key) => {
+    const translations = {
+      clearChat: {
+        en: 'Clear Chat',
+        fr: 'Effacer le chat'
+      },
+      sendMessage: {
+        en: 'Send message',
+        fr: 'Envoyer le message'
+      },
+      typeMessageFirst: {
+        en: 'Type a message first',
+        fr: 'Tapez d\'abord un message'
+      },
+      pleaseWaitResponse: {
+        en: 'Please wait for the response...',
+        fr: 'Veuillez attendre la réponse...'
+      },
+      typingMismatchMessage: {
+        en: (detectedLang, selectedLang) => 
+          `You're typing in ${getLanguageName(detectedLang)} but have selected ${getLanguageName(selectedLang)}. Switch to ${getLanguageName(detectedLang)} or retype in ${getLanguageName(selectedLang)}.`,
+        fr: (detectedLang, selectedLang) => 
+          `Vous tapez en ${detectedLang === 'en' ? 'anglais' : 'français'} mais vous avez sélectionné ${selectedLang === 'en' ? 'anglais' : 'français'}. Basculez vers ${detectedLang === 'en' ? 'l\'anglais' : 'le français'} ou retapez en ${selectedLang === 'en' ? 'anglais' : 'français'}.`
+      }
+    };
+    return translations[key][selectedLanguage] || translations[key]['en'];
   };
 
   return (
@@ -224,14 +253,13 @@ const ChatForm = () => {
         onCancel={cancelLanguageSwitch}
       />
 
-      {/* Small Language Mismatch Disclaimer */}
+      {/* Small Language Mismatch Disclaimer - FIXED Z-INDEX */}
       {showLanguageMismatch && detectedLanguage && (
         <div className="mb-2 px-3 py-2 bg-red-50 border-l-4 border-red-400 rounded text-sm shadow-lg relative z-50">
           <div className="flex items-center gap-2 text-red-700">
             <AlertTriangle className="w-4 h-4 flex-shrink-0" />
             <span>
-              You're typing in <strong>{getLanguageName(detectedLanguage)}</strong> but have selected <strong>{getLanguageName(selectedLanguage)}</strong>. 
-              Switch to {getLanguageName(detectedLanguage)} or retype in {getLanguageName(selectedLanguage)}.
+              {getText('typingMismatchMessage')(detectedLanguage, selectedLanguage)}
             </span>
           </div>
         </div>
@@ -247,7 +275,7 @@ const ChatForm = () => {
         <button
           type='button'
           onClick={handleClearChat}
-          title={showLanguageSwitchWarning ? '' : 'Clear Chat'}
+          title={showLanguageSwitchWarning ? '' : getText('clearChat')}
           className={`flex items-center justify-center w-10 h-10 rounded-md transition-colors mr-3 ${
             showLanguageSwitchWarning 
               ? 'bg-gray-300 text-gray-500 cursor-not-allowed' 
@@ -338,8 +366,8 @@ const ChatForm = () => {
             showLanguageSwitchWarning
               ? ''
               : text.trim() 
-              ? `Send message in ${selectedLanguage === 'en' ? 'English' : 'French'}`
-              : 'Type a message first'
+              ? getText('sendMessage')
+              : getText('typeMessageFirst')
           }
         >
           {isResponding ? (
