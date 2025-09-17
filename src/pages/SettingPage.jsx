@@ -262,7 +262,7 @@ const SettingPage = () => {
                 disabled={!openaiEdit}
                 label="Temperature"
                 value={formData.openai_model_temperature}
-                onChange={v => updateField('openai_model_temperature', v)}
+                onChange={v => updateField('openai_model_temperature', parseFloat(v).toFixed(2))}
               />
               <LabelledInput
                 disabled={!openaiEdit}
