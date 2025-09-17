@@ -59,7 +59,7 @@ const SettingPage = () => {
     openai_api_key: '',
     semantic_configuration_name_english: '',
     azure_search_index_name_french: '',
-    current_prompt_french: ''
+    current_prompt_french: '',
     semantic_configuration_name_french: '' // Added
   });
 
@@ -111,7 +111,7 @@ const SettingPage = () => {
       'openai_api_key',
       'semantic_configuration_name_english',
       'azure_search_index_name_french',
-      'current_prompt_french'
+      'current_prompt_french',
       'semantic_configuration_name_french' // Added
     ];
 
