@@ -22,7 +22,7 @@ const useAuth = () => {
     localStorage.setItem('group', JSON.stringify(userData.group));
     localStorage.setItem('job_title', JSON.stringify(userData.job_title));
     localStorage.setItem('token', userData.token);
-    localStorage.setItem('login_session_id', JSON.stringify(userData.login_session_id)); // ✅ Correct
+    localStorage.setItem('login_session_id', JSON.stringify(loginSessionId));
   };
 
   const logoutUser = () => {
