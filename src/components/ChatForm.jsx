@@ -226,7 +226,7 @@ const ChatForm = () => {
 
       {/* Small Language Mismatch Disclaimer */}
       {showLanguageMismatch && detectedLanguage && (
-        <div className="mb-2 px-3 py-2 bg-red-50 border-l-3 border-red-400 rounded text-sm">
+        <div className="mb-2 px-3 py-2 bg-red-50 border-l-4 border-red-400 rounded text-sm shadow-lg relative z-50">
           <div className="flex items-center gap-2 text-red-700">
             <AlertTriangle className="w-4 h-4 flex-shrink-0" />
             <span>
