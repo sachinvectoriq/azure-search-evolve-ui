@@ -261,6 +261,15 @@ export const submitFeedback = createAsyncThunk(
   }
 );
 
+let getSelectedLanguage = () => {
+  let lang = localStorage.getItem("selected_language");
+  if (!lang) {
+    lang = "en"; // Default to English
+    localStorage.setItem("selected_language", lang);
+  }
+  return lang;
+};
+
 const initialState = {
   messages: [],
   input: "",
@@ -278,7 +287,7 @@ const initialState = {
   sessionId: getSessionId(),
   userId: getUserId(), // Initialize userId here
   previewDocURL: null,
-  selectedLanguage: "en", // default to English
+  selectedLanguage: getSelectedLanguage(), //in order to persist
 };
 
 const chatSlice = createSlice({
@@ -378,6 +387,7 @@ const chatSlice = createSlice({
     },
     setSelectedLanguage: (state, action) => {
       state.selectedLanguage = action.payload;
+      localStorage.setItem("selected_language", action.payload); // Persist to localStorage
     },
     resetSessionId: (state) => {
       const newId = Date.now().toString();
