@@ -14,23 +14,28 @@ import { setSelectedLanguage } from '../app/features/chat/chatSlice';
 // Enhanced language detection using franc library
 const detectLanguage = (text) => {
   if (text.length < 8) return null;
-  
+
   const detected = franc(text);
-  
+
   if (detected === 'eng') return 'en';
-  if (detected === 'fra') return 'fr';
-  
+  if (detected === 'fra') {
+    const frenchIndicators = /\b(je|tu|il|elle|nous|vous|ils|elles|le|la|les|un|une|des|du|de|à|avec|pour|dans|sur|par|sans|sous|entre|est|sont|était|étaient|avoir|être|faire|aller|venir|voir|savoir|pouvoir|vouloir|devoir)\b|[àâäéèêëïîôöùûüÿç]/gi;
+    const frenchMatches = (text.match(frenchIndicators) || []).length;
+    if (frenchMatches > 0) return 'fr';
+  }
+
   const frenchIndicators = /\b(je|tu|il|elle|nous|vous|ils|elles|le|la|les|un|une|des|du|de|à|avec|pour|dans|sur|par|sans|sous|entre|est|sont|était|étaient|avoir|être|faire|aller|venir|voir|savoir|pouvoir|vouloir|devoir)\b|[àâäéèêëïîôöùûüÿç]/gi;
   const englishIndicators = /\b(the|and|or|but|in|on|at|to|for|of|with|by|from|about|into|through|during|before|after|is|are|was|were|be|been|being|have|has|had|do|does|did|will|would|could|should|may|might|can|must|shall|this|that|these|those|what|which|who|when|where|why|how)\b/gi;
-  
+
   const frenchMatches = (text.match(frenchIndicators) || []).length;
   const englishMatches = (text.match(englishIndicators) || []).length;
-  
-  if (frenchMatches > englishMatches && frenchMatches > 0) return 'fr';
-  if (englishMatches > frenchMatches && englishMatches > 0) return 'en';
-  
+
+  if (frenchMatches > 0 && frenchMatches > englishMatches) return 'fr';
+  if (englishMatches > 0 && englishMatches >= frenchMatches) return 'en';
+
   return null;
 };
+
 
 // Simple Language Switch Warning Banner
 const LanguageSwitchWarning = ({ isVisible, currentLang, targetLang, onConfirm, onCancel }) => {
