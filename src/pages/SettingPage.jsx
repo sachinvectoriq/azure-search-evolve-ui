@@ -1,10 +1,15 @@
 // src/pages/SettingPage.jsx
 import React, { useEffect, useState } from 'react';
+import { useSelector } from 'react-redux'; // Add this import
 import Header from '../components/Header';
 
 const API_BASE = 'https://app-azuresearch-qa-evolve.azurewebsites.net';
 
 const SettingPage = () => {
+  // Get dynamic user data from Redux store
+  const user = useSelector((state) => state.auth.user);
+  const loginSessionId = useSelector((state) => state.auth.login_session_id);
+
   const [formData, setFormData] = useState({
     azure_search_endpoint: '',
     azure_search_index_name: '',
@@ -14,10 +19,10 @@ const SettingPage = () => {
     openai_api_version: '',
     openai_model_temperature: '',
     openai_api_key: '',
-    semantic_configuration_name_english: '',  // Changed to match API response
+    semantic_configuration_name_english: '',
     azure_search_index_name_french: '',
     current_prompt_french: '',
-    semantic_configuration_name_french: ''  // Added French semantic configuration
+    semantic_configuration_name_french: ''
   });
 
   const [originalData, setOriginalData] = useState({});
@@ -49,58 +54,61 @@ const SettingPage = () => {
     setFormData(prev => ({ ...prev, [field]: value }));
 
   const postSettings = async () => {
-  setIsSaving(true);
-  setError(null);
+    setIsSaving(true);
+    setError(null);
 
-  const allowedKeys = [
-    'azure_search_endpoint',
-    'azure_search_index_name',
-    'current_prompt',
-    'openai_model_deployment_name',
-    'openai_endpoint',
-    'openai_api_version',
-    'openai_model_temperature',
-    'openai_api_key',
-    'semantic_configuration_name_english',  // Changed to match API
-    'azure_search_index_name_french',
-    'current_prompt_french',
-    'semantic_configuration_name_french'  // Added French semantic configuration to allowed keys
-  ];
+    const allowedKeys = [
+      'azure_search_endpoint',
+      'azure_search_index_name',
+      'current_prompt',
+      'openai_model_deployment_name',
+      'openai_endpoint',
+      'openai_api_version',
+      'openai_model_temperature',
+      'openai_api_key',
+      'semantic_configuration_name_english',
+      'azure_search_index_name_french',
+      'current_prompt_french',
+      'semantic_configuration_name_french'
+    ];
 
-  const body = new URLSearchParams();
-  allowedKeys.forEach(k => {
-    if (formData[k] !== undefined) {
-      body.append(k, formData[k]);
-    }
-  });
-
-  // Only append these once
-  body.append('user_name', 'test');
-  body.append('login_session_id', '2');
-
-  try {
-    const response = await fetch(`${API_BASE}/update_settings`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: body.toString(),
+    const body = new URLSearchParams();
+    allowedKeys.forEach(k => {
+      if (formData[k] !== undefined) {
+        body.append(k, formData[k]);
+      }
     });
 
-    if (!response.ok) {
-      const errData = await response.json();
-      throw new Error(errData.message || `Failed to update settings`);
-    }
+    // Use dynamic values from Redux store
+    const userName = user?.name || 'Anonymous';
+    const sessionId = loginSessionId || '';
 
-    const successMsg = await response.json();
-    console.log('Update successful:', successMsg);
-    setOriginalData({ ...formData });
-    return true;
-  } catch (err) {
-    setError(err.message);
-    return false;
-  } finally {
-    setIsSaving(false);
-  }
-};
+    body.append('user_name', userName);
+    body.append('login_session_id', sessionId);
+
+    try {
+      const response = await fetch(`${API_BASE}/update_settings`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: body.toString(),
+      });
+
+      if (!response.ok) {
+        const errData = await response.json();
+        throw new Error(errData.message || `Failed to update settings`);
+      }
+
+      const successMsg = await response.json();
+      console.log('Update successful:', successMsg);
+      setOriginalData({ ...formData });
+      return true;
+    } catch (err) {
+      setError(err.message);
+      return false;
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   const saveSection = async (setter) => {
     if (await postSettings()) setter(false);
@@ -125,6 +133,30 @@ const SettingPage = () => {
 
         {!isLoading && (
           <>
+            {/* User Info Display - Optional: Show current user info */}
+            <SectionCard title="Current User Information">
+              <div className="bg-blue-50 p-4 rounded border">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <span className="font-medium text-gray-700">User Name:</span>
+                    <span className="ml-2 text-gray-900">{user?.name || 'Not logged in'}</span>
+                  </div>
+                  <div>
+                    <span className="font-medium text-gray-700">Session ID:</span>
+                    <span className="ml-2 text-gray-900">{loginSessionId || 'No session'}</span>
+                  </div>
+                  <div>
+                    <span className="font-medium text-gray-700">Group:</span>
+                    <span className="ml-2 text-gray-900">{user?.group || 'N/A'}</span>
+                  </div>
+                  <div>
+                    <span className="font-medium text-gray-700">Job Title:</span>
+                    <span className="ml-2 text-gray-900">{user?.job_title || 'N/A'}</span>
+                  </div>
+                </div>
+              </div>
+            </SectionCard>
+
             {/* Azure Search Parameters */}
             <SectionCard title="Azure Search Parameters">
               <LabelledInput
@@ -158,7 +190,7 @@ const SettingPage = () => {
               )}
             </SectionCard>
 
-            {/* Semantic Model Parameters - Updated with French support */}
+            {/* Semantic Model Parameters */}
             <SectionCard title="Semantic Model Parameters">
               <LabelledInput
                 disabled={!semanticEdit}
@@ -218,6 +250,7 @@ const SettingPage = () => {
               <LabelledInput
                 disabled={!openaiEdit}
                 label="OpenAI API Key"
+                type="password"
                 value={formData.openai_api_key}
                 onChange={v => updateField('openai_api_key', v)}
               />
