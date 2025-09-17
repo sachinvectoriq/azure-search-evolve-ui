@@ -13,7 +13,7 @@ import { setSelectedLanguage } from '../app/features/chat/chatSlice';
 
 // Enhanced language detection using franc library
 const detectLanguage = (text) => {
-  if (text.length < 8) return null;
+  if (text.length < 2) return null;
 
   const detected = franc(text);
 
