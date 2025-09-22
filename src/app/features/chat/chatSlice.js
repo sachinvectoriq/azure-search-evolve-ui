@@ -2,9 +2,7 @@ import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import axios from "axios";
 import apiClient from "../../../services/apiClient";
 import { toast } from "react-toastify";
-// Import from auth slice to access user details
-import { useSelector } from 'react-redux';
-
+// Removed unused useSelector import
 
 let getSessionId = () => {
   let id = sessionStorage.getItem("session_id");
@@ -41,7 +39,6 @@ const cleanAiResponse = (text) => {
     .trim();
 };
 
-
 const mapLanguageForAPI = (uiLanguage) => {
   const languageMap = {
     'en': 'english',
@@ -63,7 +60,8 @@ export const sendQuestionToAPI = createAsyncThunk(
     const userName = auth.user?.name || "Anonymous";
     const loginSessionId = auth.login_session_id || "";
 
-    const rawJobTitle = authState.user?.job_title;
+    // FIXED: Use 'auth' instead of undefined 'authState'
+    const rawJobTitle = auth.user?.job_title;
     const jobTitle = (Array.isArray(rawJobTitle) && rawJobTitle.length > 0)
                       ? rawJobTitle[0]
                       : rawJobTitle || null; // Handle null job_title from SAML
@@ -75,6 +73,7 @@ export const sendQuestionToAPI = createAsyncThunk(
     console.log("User ID:", userId); // Log the userId
     console.log("User Name:", userName); // Log for verification
     console.log("Login Session ID :", loginSessionId); // Log for verification
+    console.log("Job Title:", jobTitle); // Added logging for job title
 
     // Clear follow-ups at the start of a new question
     dispatch(setFollowUps([]));
@@ -158,13 +157,13 @@ export const sendQuestionToAPI = createAsyncThunk(
             chat_session_id: sessionId,
             user_id: userId,
             user_name: userName, // Use the user_name from auth slice
-            job_title: jobTitle,
             query: question, // The original question
             ai_response: cleanedAiResponse,
             citations:
               data.citations.map((c) => c.title).join(", ") || "No citations", // Format citations as string
             login_session_id: loginSessionId, // Use the login_session_id from auth slice
-            query_language: queryLanguage // Added new parameter here
+            query_language: queryLanguage, // Added new parameter here
+            job_title: jobTitle // Added job_title to match the curl example
           };
 
           await apiClient.post("/log", logData); // <--- NEW API call for audit
@@ -215,12 +214,6 @@ export const submitFeedback = createAsyncThunk(
     const userName = auth.user?.name || "Anonymous";
     const loginSessionId = auth.login_session_id || "";
 
-    const jobTitle = (Array.isArray(rawJobTitle) && rawJobTitle.length > 0)
-                     ? rawJobTitle[0]
-                     : rawJobTitle || null; // Handle null job_title from SAML
-
-
-
     const message = messages.find((msg) => msg.id === messageId);
     if (!message) {
       throw new Error("Message not found for feedback");
@@ -241,7 +234,6 @@ export const submitFeedback = createAsyncThunk(
         {
           chat_session_id: sessionId,
           user_name: userName, // user_name
-          job_title: jobTitle,
           query: lastUserQuery,
           ai_response: message.ai_response || message.content, // Use ai_response if available
           citations:
@@ -420,10 +412,10 @@ const chatSlice = createSlice({
 
     //reset error
     setError: (state, action) => {
-    state.error = action.payload;
+      state.error = action.payload;
     },
     resetError: (state) => {
-    state.error = null;
+      state.error = null;
     },
   },
   extraReducers: (builder) => {
