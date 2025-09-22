@@ -54,12 +54,19 @@ const mapLanguageForAPI = (uiLanguage) => {
 export const sendQuestionToAPI = createAsyncThunk(
   "chat/sendQuestionToAPI",
   async (question, { dispatch, getState }) => {
+    // Dispatch the resetError action to clear any existing error messages
+    dispatch(resetError()); 
     const sessionId = getState().chat.sessionId;
     const userId = getState().chat.userId; // Get userId from state
 
     const auth = getState().auth;
     const userName = auth.user?.name || "Anonymous";
     const loginSessionId = auth.login_session_id || "";
+
+    const rawJobTitle = authState.user?.job_title;
+    const jobTitle = (Array.isArray(rawJobTitle) && rawJobTitle.length > 0)
+                      ? rawJobTitle[0]
+                      : rawJobTitle || null; // Handle null job_title from SAML
 
     const selectedLanguage = getState().chat.selectedLanguage; // Get selected language
 
@@ -151,6 +158,7 @@ export const sendQuestionToAPI = createAsyncThunk(
             chat_session_id: sessionId,
             user_id: userId,
             user_name: userName, // Use the user_name from auth slice
+            job_title: jobTitle,
             query: question, // The original question
             ai_response: cleanedAiResponse,
             citations:
@@ -207,6 +215,10 @@ export const submitFeedback = createAsyncThunk(
     const userName = auth.user?.name || "Anonymous";
     const loginSessionId = auth.login_session_id || "";
 
+    const jobTitle = (Array.isArray(rawJobTitle) && rawJobTitle.length > 0)
+                     ? rawJobTitle[0]
+                     : rawJobTitle || null; // Handle null job_title from SAML
+
 
 
     const message = messages.find((msg) => msg.id === messageId);
@@ -229,6 +241,7 @@ export const submitFeedback = createAsyncThunk(
         {
           chat_session_id: sessionId,
           user_name: userName, // user_name
+          job_title: jobTitle,
           query: lastUserQuery,
           ai_response: message.ai_response || message.content, // Use ai_response if available
           citations:
@@ -357,9 +370,7 @@ const chatSlice = createSlice({
     setIsResponding: (state, action) => {
       state.isResponding = action.payload;
     },
-    setError: (state, action) => {
-      state.error = action.payload;
-    },
+    
     clearChat: (state) => {
       state.messages = [];
       state.followUps = [];
@@ -406,6 +417,14 @@ const chatSlice = createSlice({
       state.userId = newId;
       //console.log("User ID reset to:", newId);
     },
+
+    //reset error
+    setError: (state, action) => {
+    state.error = action.payload;
+    },
+    resetError: (state) => {
+    state.error = null;
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -438,6 +457,7 @@ export const {
   setFeedbackStatus,
   setIsResponding,
   setError,
+  resetError,
   clearChat,
   clearInput,
   resetToWelcome,
