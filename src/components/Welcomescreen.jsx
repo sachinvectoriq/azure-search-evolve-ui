@@ -12,8 +12,8 @@ const WelcomeScreen = () => {
       subtitle: 'This chatbot is configured to answer your questions'
     },
     fr: {
-      title: 'Commencer à discuter',
-      subtitle: 'Ce chatbot est configuré pour répondre à vos questions'
+      title: 'Démarrez une session de chat',
+      subtitle: 'Ce chatbot est conçu pour répondre à vos questions'
     }
   };
 
