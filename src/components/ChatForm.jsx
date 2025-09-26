@@ -53,7 +53,7 @@ const LanguageSwitchWarning = ({ isVisible, currentLang, targetLang, onConfirm, 
               <strong>Switch to {getLanguageName(targetLang)}? All chats will be cleared.</strong>
             </p>
             <p className="text-xs opacity-90">
-              <strong>Basculer vers {targetLang === 'fr' ? 'Français' : 'Anglais'}? Tous les chats seront effacés.</strong>
+              <strong>Passer à {targetLang === 'fr' ? 'le français' : 'l’anglais' }? Toutes les discussions seront effacées.</strong>
             </p>
           </div>
         </div>
@@ -210,7 +210,7 @@ const ChatForm = () => {
     if (showLanguageSwitchWarning) return '';
     if (isResponding) return getText('pleaseWaitResponse');
     return selectedLanguage === 'fr' 
-      ? 'Tapez votre question en français...' 
+      ? 'Saisissez une nouvelle question...' 
       : 'Type a new question...';
   };
 
