@@ -3,6 +3,7 @@ import Login from '../pages/Login';
 import NotFound from '../pages/NotFound';
 import Dashboard from '../pages/Dashboard';
 import Home from '../pages/Home';
+import QuickTour from '../pages/QuickTour'
 import SettingPage from '../pages/SettingPage';
 import App from '../App';
 
@@ -15,6 +16,7 @@ const RouterProvider = () => {
           <Route path='home' element={<Home />} />
           <Route path='dashboard' element={<Dashboard />} />
           <Route path='settings' element={<SettingPage />} />
+          <Route path='quick-tour' element={<QuickTour />} />
         </Route>
         <Route path='*' element={<NotFound />} />
       </Route>
