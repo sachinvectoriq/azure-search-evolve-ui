@@ -116,7 +116,7 @@ const Header = () => {
             </button>
           )}
 
-          {/* Help Dropdown with Hover Delay 
+          {/* Help Dropdown with Hover Delay */}
           <div 
             className="relative" 
             ref={helpDropdownRef}
@@ -139,7 +139,7 @@ const Header = () => {
                 </button>
               </div>
             )}
-          </div>*/}
+          </div>
 
           {/* User Display */}
           <h1 className="border border-gray-100 bg-gray-100 font-semibold hover:border-[#174a7e] text-[#174a7e] cursor-pointer p-2 px-4 rounded-md flex items-center gap-2 transition-colors">
