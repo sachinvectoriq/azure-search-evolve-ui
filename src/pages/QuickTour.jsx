@@ -2,7 +2,7 @@
 import React from 'react';
 import Header from '../components/Header';
 import Assistant from '../assets/EVOLVE Knowledge Assistant.mp4';
-import VideoThumbnail from '../assets/Thumbnail.png'; 
+import VideoThumbnail from '../assets/Thumbnail.jpg'; 
 
 const QuickTour = () => {
   return (
