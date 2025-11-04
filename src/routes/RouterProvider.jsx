@@ -5,6 +5,7 @@ import Dashboard from '../pages/Dashboard';
 import Home from '../pages/Home';
 import QuickTour from '../pages/QuickTour'
 import SettingPage from '../pages/SettingPage';
+import Report from '../pages/Report';
 import App from '../App';
 
 const RouterProvider = () => {
@@ -17,6 +18,7 @@ const RouterProvider = () => {
           <Route path='dashboard' element={<Dashboard />} />
           <Route path='settings' element={<SettingPage />} />
           <Route path='quick-tour' element={<QuickTour />} />
+          <Route path='reports' element={<Report />} />
         </Route>
         <Route path='*' element={<NotFound />} />
       </Route>
