@@ -1,4 +1,4 @@
-import { LogOut, User, Settings, Home, HelpCircle } from "lucide-react";
+import { LogOut, User, Settings, Home, HelpCircle, BarChart3 } from "lucide-react";
 import Logo from './Logo';
 import useAuth from '../hooks/useAuth';
 import { useNavigate, useLocation } from 'react-router-dom';
@@ -15,6 +15,7 @@ const Header = () => {
   const hoverTimeoutRef = useRef(null);
 
   const isSettingsPage = location.pathname === '/settings';
+  const isReportsPage = location.pathname === '/reports'; 
 
   // Language-based text content
   const getText = (key) => {
@@ -75,6 +76,15 @@ const Header = () => {
     }
   };
 
+  const handleReportsToggle = () => { 
+    //  Added reports toggle similar to previous app
+    if (isReportsPage) {
+      navigate('/home');
+    } else {
+      navigate('/reports');
+    }
+  };
+
   const goToQuickTour = () => {
     // Open Quick Tour in a new tab
     window.open('/quick-tour', '_blank');
@@ -107,13 +117,26 @@ const Header = () => {
 
           {/* Settings Button - Only for admin - Settings text kept in English */}
           {user?.group === 'admin' && (
-            <button
-              onClick={handleNavToggle}
-              className="border border-gray-100 bg-gray-100 font-semibold hover:border-[#174a7e] text-[#174a7e] cursor-pointer p-2 px-4 rounded-md flex items-center gap-2 transition-colors"
-            >
-              {isSettingsPage ? <Home size={18} /> : <Settings size={18} />}
-              {isSettingsPage ? getText('home') : getText('settings')}
-            </button>
+            <>
+              {/* ⚙️ Settings ↔ Home */}
+              <button
+                onClick={handleNavToggle}
+                className="border border-gray-100 bg-gray-100 font-semibold hover:border-[#174a7e] text-[#174a7e] cursor-pointer p-2 px-4 rounded-md flex items-center gap-2 transition-colors"
+              >
+                {isSettingsPage ? <Home size={18} /> : <Settings size={18} />}
+                {isSettingsPage ? getText('home') : getText('settings')}
+              </button>
+
+              {/* 📊 Reports ↔ Home — 🔥 Newly Added */}
+              <button
+                onClick={handleReportsToggle}
+                className="border border-gray-100 bg-gray-100 font-semibold hover:border-[#174a7e] text-[#174a7e] cursor-pointer p-2 px-4 rounded-md flex items-center gap-2 transition-colors"
+              >
+                {isReportsPage ? <Home size={18} /> : <BarChart3 size={18} />}
+                {isReportsPage ? getText('home') : 'Reports'} 
+                {/* 🔥 You can add language support here later if needed */}
+              </button>
+            </>
           )}
 
           {/* Help Dropdown with Hover Delay */}
