@@ -5,6 +5,7 @@ import { franc } from 'franc-min';
 import {
   sendQuestionToAPI,
   setInput,
+  clearChat,
   clearIfInputEmpty,
   resetSessionId,
   resetUserId,
@@ -141,17 +142,14 @@ const ChatForm = () => {
   };
 
   const handleClearChat = () => {
-    if (!input.trim()) {
-      dispatch(clearIfInputEmpty());
-    }
+    dispatch(clearChat());
     dispatch(resetSessionId());
     dispatch(resetUserId());
     setText('');
-    setShowLanguageMismatch(false);
-    setDetectedLanguage(null);
-    setSubmitError(false);
+
     if (textareaRef.current) {
       textareaRef.current.style.height = 'auto';
+      textareaRef.current.focus();
     }
   };
 
