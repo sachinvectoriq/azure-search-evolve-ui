@@ -60,36 +60,44 @@ const Header = () => {
 
   // ✅ Report Access Check (same logic as OBE)
   useEffect(() => {
-    const fetchReportAccess = async () => {
-      if (user?.group === "admin") {
-        setHasReportAccess(true);
-        return;
-      }
+  const fetchReportAccess = async () => {
+    // ✅ Get email from Redux OR localStorage (for reloads)
+    const storedEmail = JSON.parse(localStorage.getItem('email') || 'null');
+    const emailToCheck = user?.email || storedEmail;
 
-      if (!user?.email) {
-        setHasReportAccess(false);
-        return;
-      }
+    // Admins always have access
+    if (user?.group === "admin" || localStorage.getItem('group')?.includes("admin")) {
+      setHasReportAccess(true);
+      return;
+    }
 
-      try {
-        const response = await axios.get(`${API_BASE}/get_reports_access`, {
-          params: { limit: 100 },
-        });
+    if (!emailToCheck) {
+      setHasReportAccess(false);
+      return;
+    }
 
-        const accessList = response.data.records || [];
-        const allowed = accessList.some(
-          (u) => u.email?.toLowerCase() === user.email?.toLowerCase()
-        );
+    try {
+      const response = await axios.get(`${API_BASE}/get_reports_access`, {
+        params: { limit: 100 },
+      });
 
-        setHasReportAccess(allowed);
-      } catch (error) {
-        console.error("Error checking report access:", error);
-        setHasReportAccess(false);
-      }
-    };
+      const accessList = response.data.records || [];
+      const allowed = accessList.some(
+        (u) => u.email?.toLowerCase() === emailToCheck.toLowerCase()
+      );
 
-    fetchReportAccess();
-  }, [user?.email, user?.group]);
+      setHasReportAccess(allowed);
+    } catch (error) {
+      console.error("Error checking report access:", error);
+      setHasReportAccess(false);
+    }
+  };
+
+  // Delay slightly so useAuth finishes restoring user first
+  const timer = setTimeout(fetchReportAccess, 300);
+  return () => clearTimeout(timer);
+}, [user?.email, user?.group]);
+
 
   // Close dropdown on outside click
   useEffect(() => {
