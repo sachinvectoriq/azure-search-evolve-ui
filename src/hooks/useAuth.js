@@ -33,6 +33,24 @@ const useAuth = () => {
   const loginSessionId = useSelector((state) => state.auth.login_session_id);
 
   const isLoggedIn = !!token;
+  
+  // ✅ Restore Redux auth state from localStorage after refresh
+  useEffect(() => {
+  // If Redux user is empty but localStorage has data, restore it
+  if (!user && localStorage.getItem('name')) {
+    const restoredUser = {
+      name: JSON.parse(localStorage.getItem('name') || '""'),
+      group: JSON.parse(localStorage.getItem('group') || '""'),
+      email: JSON.parse(localStorage.getItem('email') || '""'),
+      job_title: JSON.parse(localStorage.getItem('job_title') || '""'),
+    };
+    const savedToken = localStorage.getItem('token') || '';
+    const savedSessionId = JSON.parse(localStorage.getItem('login_session_id') || '""');
+    dispatch(login({ user: restoredUser, token: savedToken }));
+    dispatch(setLoginSessionId(savedSessionId));
+  }
+}, [dispatch, user]);
+
 
   const loginUser = (userData) => {
     // ✅ Decode JWT and extract email if backend didn’t send
