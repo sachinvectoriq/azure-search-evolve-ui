@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { UserPlus, Trash2, AlertCircle, CheckCircle, X, Users } from 'lucide-react';
 
-const API_BASE = 'https://qa-azure-search.azurewebsites.net';
+const API_BASE = 'https://app-azuresearch-qa-evolve.azurewebsites.net';
 
 const ReportAccessManagement = ({ adminName = "Admin" }) => {
   const [accessUsers, setAccessUsers] = useState([]);
