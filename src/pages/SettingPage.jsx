@@ -2,7 +2,9 @@
 import React, { useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
+import { Settings, Users } from 'lucide-react';
 import Header from '../components/Header';
+import ReportAccessManagement from '../components/ReportAccessManagement';
 
 const API_BASE = 'https://app-azuresearch-qa-evolve.azurewebsites.net';
 
@@ -11,32 +13,20 @@ const SettingPage = () => {
 
   // Get dynamic values from Redux
   const user = useSelector(state => state.auth.user);
-  const selectedLanguage = useSelector((state) => state.chat.selectedLanguage); // Add language selector
+  const selectedLanguage = useSelector(state => state.chat.selectedLanguage);
   const rawUserName = user?.name;
   const userName = (Array.isArray(rawUserName) && rawUserName.length > 0)
     ? rawUserName[0]
     : rawUserName || 'Anonymous';
   const loginSessionId = useSelector(state => state.auth.login_session_id);
 
-  // Language-based text content (only for loading/error messages, keeping settings in English)
+  // Language text helper
   const getText = (key) => {
     const translations = {
-      loadingSettings: {
-        en: 'Loading settings...',
-        fr: 'Chargement des paramètres...'
-      },
-      error: {
-        en: 'Error!',
-        fr: 'Erreur !'
-      },
-      saving: {
-        en: 'Saving...',
-        fr: 'Enregistrement...'
-      },
-      savingMessage: {
-        en: 'Please wait while we update your settings.',
-        fr: 'Veuillez patienter pendant que nous mettons à jour vos paramètres.'
-      }
+      loadingSettings: { en: 'Loading settings...', fr: 'Chargement des paramètres...' },
+      error: { en: 'Error!', fr: 'Erreur !' },
+      saving: { en: 'Saving...', fr: 'Enregistrement...' },
+      savingMessage: { en: 'Please wait while we update your settings.', fr: 'Veuillez patienter pendant que nous mettons à jour vos paramètres.' }
     };
     return translations[key][selectedLanguage] || translations[key]['en'];
   };
@@ -47,6 +37,8 @@ const SettingPage = () => {
       navigate('/home');
     }
   }, [user, navigate]);
+
+  const [activeSection, setActiveSection] = useState('general');
 
   const [formData, setFormData] = useState({
     azure_search_endpoint: '',
@@ -117,12 +109,9 @@ const SettingPage = () => {
 
     const body = new URLSearchParams();
     allowedKeys.forEach(k => {
-      if (formData[k] !== undefined) {
-        body.append(k, formData[k]);
-      }
+      if (formData[k] !== undefined) body.append(k, formData[k]);
     });
 
-    // Append user details dynamically
     body.append('user_name', userName);
     body.append('login_session_id', loginSessionId);
 
@@ -163,172 +152,204 @@ const SettingPage = () => {
     setter(false);
   };
 
-  // Don't render the page if user is not admin or not loaded
-  if (!user || user.group !== 'admin') {
-    return null;
-  }
+  if (!user || user.group !== 'admin') return null;
+
+  const menuItems = [
+    { id: 'general', label: 'General Settings', icon: Settings },
+    { id: 'access', label: 'Access Management', icon: Users }
+  ];
 
   return (
     <div className="min-h-screen bg-[#f7f9fc]">
       <Header />
-      <div className="max-w-4xl mx-auto p-8 space-y-10">
-        {isLoading && <LoadingSpinner getText={getText} />}
-        {error && <ErrorBanner message={error} onClose={() => setError(null)} getText={getText} />}
-        {isSaving && <SavingBanner getText={getText} />}
+      <div className="flex">
+        {/* Sidebar */}
+        <div className="w-64 bg-white shadow-lg fixed left-0 top-0 h-screen pt-20">
+          <div className="p-4 h-full overflow-y-auto">
+            <h2 className="text-xl font-bold text-[#174a7e] px-3 py-2 mb-6">Settings</h2>
+            <nav className="space-y-2">
+              {menuItems.map(item => {
+                const Icon = item.icon;
+                const isActive = activeSection === item.id;
+                return (
+                  <button
+                    key={item.id}
+                    onClick={() => setActiveSection(item.id)}
+                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${
+                      isActive ? 'bg-[#174a7e] text-white shadow-md' : 'text-gray-700 hover:bg-gray-100'
+                    }`}
+                  >
+                    <Icon size={20} />
+                    <span className="font-medium">{item.label}</span>
+                  </button>
+                );
+              })}
+            </nav>
+          </div>
+        </div>
 
-        {!isLoading && (
-          <>
-            {/* Azure Search Parameters */}
-            <SectionCard title="Azure Search Parameters">
-              <LabelledInput
-                disabled={!azureEdit}
-                label="Search Endpoint"
-                value={formData.azure_search_endpoint}
-                onChange={v => updateField('azure_search_endpoint', v)}
-              />
-              <LabelledInput
-                disabled={!azureEdit}
-                label="English Index Name"
-                value={formData.azure_search_index_name}
-                onChange={v => updateField('azure_search_index_name', v)}
-              />
-              <LabelledInput
-                disabled={!azureEdit}
-                label="French Index Name"
-                value={formData.azure_search_index_name_french}
-                onChange={v => updateField('azure_search_index_name_french', v)}
-              />
-              {!azureEdit ? (
-                <ChangeButton onClick={() => setAzureEdit(true)} />
-              ) : (
-                <ActionButtons
-                  onSave={() => saveSection(setAzureEdit)}
-                  onCancel={() =>
-                    cancelSection(['azure_search_endpoint', 'azure_search_index_name', 'azure_search_index_name_french'], setAzureEdit)
-                  }
-                  disabled={isSaving}
-                />
-              )}
-            </SectionCard>
+        {/* Main Content */}
+        <div className="flex-1 ml-64 p-8 overflow-y-auto">
+          {isLoading && <LoadingSpinner getText={getText} />}
+          {error && <ErrorBanner message={error} onClose={() => setError(null)} getText={getText} />}
+          {isSaving && <SavingBanner getText={getText} />}
 
-            {/* Semantic Model Parameters */}
-            <SectionCard title="Semantic Model Parameters">
-              <LabelledInput
-                disabled={!semanticEdit}
-                label="English Semantic Configuration Name"
-                value={formData.semantic_configuration_name_english}
-                onChange={v => updateField('semantic_configuration_name_english', v)}
-              />
-              <LabelledInput
-                disabled={!semanticEdit}
-                label="French Semantic Configuration Name"
-                value={formData.semantic_configuration_name_french}
-                onChange={v => updateField('semantic_configuration_name_french', v)}
-              />
-              {!semanticEdit ? (
-                <ChangeButton onClick={() => setSemanticEdit(true)} />
-              ) : (
-                <ActionButtons
-                  onSave={() => saveSection(setSemanticEdit)}
-                  onCancel={() =>
-                    cancelSection(['semantic_configuration_name_english', 'semantic_configuration_name_french'], setSemanticEdit)
-                  }
-                  disabled={isSaving}
-                />
-              )}
-            </SectionCard>
+          {!isLoading && (
+            <>
+              {activeSection === 'general' && (
+                <>
+                  {/* Azure Search Parameters */}
+                  <SectionCard title="Azure Search Parameters">
+                    <LabelledInput
+                      disabled={!azureEdit}
+                      label="Search Endpoint"
+                      value={formData.azure_search_endpoint}
+                      onChange={v => updateField('azure_search_endpoint', v)}
+                    />
+                    <LabelledInput
+                      disabled={!azureEdit}
+                      label="English Index Name"
+                      value={formData.azure_search_index_name}
+                      onChange={v => updateField('azure_search_index_name', v)}
+                    />
+                    <LabelledInput
+                      disabled={!azureEdit}
+                      label="French Index Name"
+                      value={formData.azure_search_index_name_french}
+                      onChange={v => updateField('azure_search_index_name_french', v)}
+                    />
+                    {!azureEdit ? (
+                      <ChangeButton onClick={() => setAzureEdit(true)} />
+                    ) : (
+                      <ActionButtons
+                        onSave={() => saveSection(setAzureEdit)}
+                        onCancel={() =>
+                          cancelSection(['azure_search_endpoint', 'azure_search_index_name', 'azure_search_index_name_french'], setAzureEdit)
+                        }
+                        disabled={isSaving}
+                      />
+                    )}
+                  </SectionCard>
 
-            {/* OpenAI Parameters */}
-            <SectionCard title="OpenAI Model Parameters">
-              <LabelledInput
-                disabled={!openaiEdit}
-                label="Deployment Name"
-                value={formData.openai_model_deployment_name}
-                onChange={v => updateField('openai_model_deployment_name', v)}
-              />
-              <LabelledInput
-                disabled={!openaiEdit}
-                label="Endpoint"
-                value={formData.openai_endpoint}
-                onChange={v => updateField('openai_endpoint', v)}
-              />
-              <LabelledInput
-                disabled={!openaiEdit}
-                label="API Version"
-                value={formData.openai_api_version}
-                onChange={v => updateField('openai_api_version', v)}
-              />
-              <LabelledInput
-                disabled={!openaiEdit}
-                label="Temperature"
-                type="number"
-                step="0.01"
-                min="0"
-                max="2"
-                value={formData.openai_model_temperature}
-                onChange={v => updateField('openai_model_temperature', v)}
-              />
-              <LabelledInput
-                disabled={!openaiEdit}
-                label="OpenAI API Key"
-                value={formData.openai_api_key}
-                onChange={v => updateField('openai_api_key', v)}
-              />
-              {!openaiEdit ? (
-                <ChangeButton onClick={() => setOpenaiEdit(true)} />
-              ) : (
-                <ActionButtons
-                  onSave={() => saveSection(setOpenaiEdit)}
-                  onCancel={() =>
-                    cancelSection(
-                      [
-                        'openai_model_deployment_name',
-                        'openai_endpoint',
-                        'openai_api_version',
-                        'openai_model_temperature',
-                        'openai_api_key'
-                      ],
-                      setOpenaiEdit
-                    )
-                  }
-                  disabled={isSaving}
-                />
-              )}
-            </SectionCard>
+                  {/* Semantic Model Parameters */}
+                  <SectionCard title="Semantic Model Parameters">
+                    <LabelledInput
+                      disabled={!semanticEdit}
+                      label="English Semantic Configuration Name"
+                      value={formData.semantic_configuration_name_english}
+                      onChange={v => updateField('semantic_configuration_name_english', v)}
+                    />
+                    <LabelledInput
+                      disabled={!semanticEdit}
+                      label="French Semantic Configuration Name"
+                      value={formData.semantic_configuration_name_french}
+                      onChange={v => updateField('semantic_configuration_name_french', v)}
+                    />
+                    {!semanticEdit ? (
+                      <ChangeButton onClick={() => setSemanticEdit(true)} />
+                    ) : (
+                      <ActionButtons
+                        onSave={() => saveSection(setSemanticEdit)}
+                        onCancel={() =>
+                          cancelSection(['semantic_configuration_name_english', 'semantic_configuration_name_french'], setSemanticEdit)
+                        }
+                        disabled={isSaving}
+                      />
+                    )}
+                  </SectionCard>
 
-            {/* Prompts */}
-            <SectionCard title="System Prompts">
-              <LabelledTextarea
-                disabled={!promptEdit}
-                label="English Prompt"
-                value={formData.current_prompt}
-                onChange={v => updateField('current_prompt', v)}
-              />
-              <LabelledTextarea
-                disabled={!promptEdit}
-                label="French Prompt"
-                value={formData.current_prompt_french}
-                onChange={v => updateField('current_prompt_french', v)}
-              />
-              {!promptEdit ? (
-                <ChangeButton onClick={() => setPromptEdit(true)} />
-              ) : (
-                <ActionButtons
-                  onSave={() => saveSection(setPromptEdit)}
-                  onCancel={() => cancelSection(['current_prompt', 'current_prompt_french'], setPromptEdit)}
-                  disabled={isSaving}
-                />
+                  {/* OpenAI Parameters */}
+                  <SectionCard title="OpenAI Model Parameters">
+                    <LabelledInput
+                      disabled={!openaiEdit}
+                      label="Deployment Name"
+                      value={formData.openai_model_deployment_name}
+                      onChange={v => updateField('openai_model_deployment_name', v)}
+                    />
+                    <LabelledInput
+                      disabled={!openaiEdit}
+                      label="Endpoint"
+                      value={formData.openai_endpoint}
+                      onChange={v => updateField('openai_endpoint', v)}
+                    />
+                    <LabelledInput
+                      disabled={!openaiEdit}
+                      label="API Version"
+                      value={formData.openai_api_version}
+                      onChange={v => updateField('openai_api_version', v)}
+                    />
+                    <LabelledInput
+                      disabled={!openaiEdit}
+                      label="Temperature"
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      max="2"
+                      value={formData.openai_model_temperature}
+                      onChange={v => updateField('openai_model_temperature', v)}
+                    />
+                    <LabelledInput
+                      disabled={!openaiEdit}
+                      label="OpenAI API Key"
+                      value={formData.openai_api_key}
+                      onChange={v => updateField('openai_api_key', v)}
+                    />
+                    {!openaiEdit ? (
+                      <ChangeButton onClick={() => setOpenaiEdit(true)} />
+                    ) : (
+                      <ActionButtons
+                        onSave={() => saveSection(setOpenaiEdit)}
+                        onCancel={() =>
+                          cancelSection(
+                            ['openai_model_deployment_name', 'openai_endpoint', 'openai_api_version', 'openai_model_temperature', 'openai_api_key'],
+                            setOpenaiEdit
+                          )
+                        }
+                        disabled={isSaving}
+                      />
+                    )}
+                  </SectionCard>
+
+                  {/* Prompts */}
+                  <SectionCard title="System Prompts">
+                    <LabelledTextarea
+                      disabled={!promptEdit}
+                      label="English Prompt"
+                      value={formData.current_prompt}
+                      onChange={v => updateField('current_prompt', v)}
+                    />
+                    <LabelledTextarea
+                      disabled={!promptEdit}
+                      label="French Prompt"
+                      value={formData.current_prompt_french}
+                      onChange={v => updateField('current_prompt_french', v)}
+                    />
+                    {!promptEdit ? (
+                      <ChangeButton onClick={() => setPromptEdit(true)} />
+                    ) : (
+                      <ActionButtons
+                        onSave={() => saveSection(setPromptEdit)}
+                        onCancel={() => cancelSection(['current_prompt', 'current_prompt_french'], setPromptEdit)}
+                        disabled={isSaving}
+                      />
+                    )}
+                  </SectionCard>
+                </>
               )}
-            </SectionCard>
-          </>
-        )}
+
+              {/* Access Management Section */}
+              {activeSection === 'access' && (
+                <ReportAccessManagement adminName={userName} />
+              )}
+            </>
+          )}
+        </div>
       </div>
     </div>
   );
 };
 
 /* ----------------- SMALL COMPONENTS ------------------ */
-// Updated components to support French language
 
 const LoadingSpinner = ({ getText }) => (
   <div className="flex justify-center items-center py-12">
@@ -355,7 +376,7 @@ const SavingBanner = ({ getText }) => (
 );
 
 const SectionCard = ({ title, children }) => (
-  <div className="bg-white p-6 rounded shadow-md">
+  <div className="bg-white p-6 rounded shadow-md mb-8">
     <h2 className="text-xl font-semibold text-[#174a7e] mb-4">{title}</h2>
     {children}
   </div>
