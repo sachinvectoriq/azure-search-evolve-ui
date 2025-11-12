@@ -1,23 +1,29 @@
+// src/components/Header.jsx
 import { LogOut, User, Settings, Home, HelpCircle, BarChart3 } from "lucide-react";
 import Logo from './Logo';
 import useAuth from '../hooks/useAuth';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useState, useEffect, useRef } from 'react';
 import { useSelector } from 'react-redux';
+import axios from "axios";
+
+const API_BASE = 'https://app-azuresearch-qa-evolve.azurewebsites.net';
 
 const Header = () => {
   const { logoutUser, user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const selectedLanguage = useSelector((state) => state.chat.selectedLanguage);
+
   const [helpOpen, setHelpOpen] = useState(false);
+  const [hasReportAccess, setHasReportAccess] = useState(false);
   const helpDropdownRef = useRef(null);
   const hoverTimeoutRef = useRef(null);
 
   const isSettingsPage = location.pathname === '/settings';
-  const isReportsPage = location.pathname === '/reports'; 
+  const isReportsPage = location.pathname === '/reports';
 
-  // Language-based text content
+  // Multilingual text
   const getText = (key) => {
     const translations = {
       title: {
@@ -28,10 +34,9 @@ const Header = () => {
         en: 'Home',
         fr: 'Home'
       },
-      // Keep Settings in English as requested
       settings: {
         en: 'Settings',
-        fr: 'Settings' // Keeping in English
+        fr: 'Settings'
       },
       logout: {
         en: 'Logout',
@@ -44,11 +49,49 @@ const Header = () => {
       quickTour: {
         en: 'Quick Tour',
         fr: 'Visite rapide'
+      },
+      reports: {
+        en: 'Reports',
+        fr: 'Rapports'
       }
     };
     return translations[key][selectedLanguage] || translations[key]['en'];
   };
 
+  // ✅ Report Access Check (same logic as OBE)
+  useEffect(() => {
+    const fetchReportAccess = async () => {
+      if (user?.group === "admin") {
+        setHasReportAccess(true);
+        return;
+      }
+
+      if (!user?.email) {
+        setHasReportAccess(false);
+        return;
+      }
+
+      try {
+        const response = await axios.get(`${API_BASE}/get_reports_access`, {
+          params: { limit: 100 },
+        });
+
+        const accessList = response.data.records || [];
+        const allowed = accessList.some(
+          (u) => u.email?.toLowerCase() === user.email?.toLowerCase()
+        );
+
+        setHasReportAccess(allowed);
+      } catch (error) {
+        console.error("Error checking report access:", error);
+        setHasReportAccess(false);
+      }
+    };
+
+    fetchReportAccess();
+  }, [user?.email, user?.group]);
+
+  // Close dropdown on outside click
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (helpDropdownRef.current && !helpDropdownRef.current.contains(event.target)) {
@@ -62,48 +105,36 @@ const Header = () => {
     };
   }, []);
 
+  // Logout
   const handleLogout = () => {
     logoutUser();
     localStorage.clear();
     navigate('/');
   };
 
+  // Settings ↔ Home
   const handleNavToggle = () => {
-    if (isSettingsPage) {
-      navigate('/home');
-    } else {
-      navigate('/settings');
-    }
+    navigate(isSettingsPage ? '/home' : '/settings');
   };
 
-  const handleReportsToggle = () => { 
-    //  Added reports toggle similar to previous app
-    if (isReportsPage) {
-      navigate('/home');
-    } else {
-      navigate('/reports');
-    }
+  // Reports ↔ Home
+  const handleReportsToggle = () => {
+    navigate(isReportsPage ? '/home' : '/reports');
   };
 
+  // Help dropdown
   const goToQuickTour = () => {
-    // Open Quick Tour in a new tab
     window.open('/quick-tour', '_blank');
     setHelpOpen(false);
   };
 
   const handleMouseEnter = () => {
-    // Clear any existing timeout
-    if (hoverTimeoutRef.current) {
-      clearTimeout(hoverTimeoutRef.current);
-    }
+    if (hoverTimeoutRef.current) clearTimeout(hoverTimeoutRef.current);
     setHelpOpen(true);
   };
 
   const handleMouseLeave = () => {
-    // Add a delay before closing
-    hoverTimeoutRef.current = setTimeout(() => {
-      setHelpOpen(false);
-    }, 400); // 400ms delay
+    hoverTimeoutRef.current = setTimeout(() => setHelpOpen(false), 400);
   };
 
   return (
@@ -113,41 +144,39 @@ const Header = () => {
         <h1 className="text-3xl font-semibold text-[#fcbc19]">
           {getText('title')}
         </h1>
+
         <div className="flex items-center gap-4">
-
-          {/* Settings Button - Only for admin - Settings text kept in English */}
+          {/* Settings Button (Admins only) */}
           {user?.group === 'admin' && (
-            <>
-              {/* ⚙️ Settings ↔ Home */}
-              <button
-                onClick={handleNavToggle}
-                className="border border-gray-100 bg-gray-100 font-semibold hover:border-[#174a7e] text-[#174a7e] cursor-pointer p-2 px-4 rounded-md flex items-center gap-2 transition-colors"
-              >
-                {isSettingsPage ? <Home size={18} /> : <Settings size={18} />}
-                {isSettingsPage ? getText('home') : getText('settings')}
-              </button>
-
-              {/* 📊 Reports ↔ Home — 🔥 Newly Added */}
-              <button
-                onClick={handleReportsToggle}
-                className="border border-gray-100 bg-gray-100 font-semibold hover:border-[#174a7e] text-[#174a7e] cursor-pointer p-2 px-4 rounded-md flex items-center gap-2 transition-colors"
-              >
-                {isReportsPage ? <Home size={18} /> : <BarChart3 size={18} />}
-                {isReportsPage ? getText('home') : 'Reports'} 
-                {/* 🔥 You can add language support here later if needed */}
-              </button>
-            </>
+            <button
+              onClick={handleNavToggle}
+              className="border border-gray-100 bg-gray-100 font-semibold hover:border-[#174a7e] text-[#174a7e] p-2 px-4 rounded-md flex items-center gap-2 transition-colors"
+            >
+              {isSettingsPage ? <Home size={18} /> : <Settings size={18} />}
+              {isSettingsPage ? getText('home') : getText('settings')}
+            </button>
           )}
 
-          {/* Help Dropdown with Hover Delay */}
-          <div 
-            className="relative" 
+          {/* Reports Button (Admins + Users with access) */}
+          {hasReportAccess && (
+            <button
+              onClick={handleReportsToggle}
+              className="border border-gray-100 bg-gray-100 font-semibold hover:border-[#174a7e] text-[#174a7e] p-2 px-4 rounded-md flex items-center gap-2 transition-colors"
+            >
+              {isReportsPage ? <Home size={18} /> : <BarChart3 size={18} />}
+              {isReportsPage ? getText('home') : getText('reports')}
+            </button>
+          )}
+
+          {/* Help Dropdown */}
+          <div
+            className="relative"
             ref={helpDropdownRef}
             onMouseEnter={handleMouseEnter}
             onMouseLeave={handleMouseLeave}
           >
             <button
-              className="border border-gray-100 bg-gray-100 font-semibold text-[#174a7e] cursor-pointer p-2 px-4 rounded-md flex items-center gap-2 hover:border-[#174a7e] transition-colors"
+              className="border border-gray-100 bg-gray-100 font-semibold text-[#174a7e] p-2 px-4 rounded-md flex items-center gap-2 hover:border-[#174a7e] transition-colors"
             >
               <HelpCircle size={18} />
               {getText('help')}
@@ -156,7 +185,7 @@ const Header = () => {
               <div className="absolute top-full left-0 mt-1 w-48 bg-white shadow-lg rounded-lg border border-gray-200 z-50 py-2">
                 <button
                   onClick={goToQuickTour}
-                  className="block w-full text-left px-4 py-3 text-[#174a7e] hover:bg-gray-200 hover:cursor-pointer transition-colors text-sm font-medium cursor-pointer"
+                  className="block w-full text-left px-4 py-3 text-[#174a7e] hover:bg-gray-200 transition-colors text-sm font-medium"
                 >
                   {getText('quickTour')}
                 </button>
@@ -165,15 +194,15 @@ const Header = () => {
           </div>
 
           {/* User Display */}
-          <h1 className="border border-gray-100 bg-gray-100 font-semibold hover:border-[#174a7e] text-[#174a7e] cursor-pointer p-2 px-4 rounded-md flex items-center gap-2 transition-colors">
+          <h1 className="border border-gray-100 bg-gray-100 font-semibold hover:border-[#174a7e] text-[#174a7e] p-2 px-4 rounded-md flex items-center gap-2 transition-colors">
             <User />
             {user ? user.name : 'Test User'}
           </h1>
 
-          {/* Logout Button */}
+          {/* Logout */}
           <button
             onClick={handleLogout}
-            className="border border-[#174a7e] bg-white font-semibold text-[#174a7e] cursor-pointer p-2 px-4 rounded-md flex items-center gap-2 hover:bg-[#082340] hover:text-white transition-colors"
+            className="border border-[#174a7e] bg-white font-semibold text-[#174a7e] p-2 px-4 rounded-md flex items-center gap-2 hover:bg-[#082340] hover:text-white transition-colors"
           >
             <span>{getText('logout')}</span>
             <LogOut size={16} />
