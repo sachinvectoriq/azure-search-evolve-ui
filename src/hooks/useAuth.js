@@ -1,50 +1,85 @@
+// src/hooks/useAuth.js
 import { useSelector, useDispatch } from 'react-redux';
 import {
   login,
   logout,
   setToken,
   removeToken,
-  //storeSessionId,
   setLoginSessionId,
 } from '../app/features/auth/authSlice';
+
+// ✅ Helper: Safely decode JWT to extract email
+const decodeJwt = (token) => {
+  try {
+    const base64Url = token.split('.')[1];
+    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+    const jsonPayload = decodeURIComponent(
+      atob(base64)
+        .split('')
+        .map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+        .join('')
+    );
+    return JSON.parse(jsonPayload);
+  } catch (e) {
+    console.error('❌ JWT decode failed:', e);
+    return null;
+  }
+};
 
 const useAuth = () => {
   const dispatch = useDispatch();
   const user = useSelector((state) => state.auth.user);
   const token = useSelector((state) => state.auth.token);
-  const loginSessionId = useSelector((state) => state.auth.login_session_id);  // ✅ Add this
+  const loginSessionId = useSelector((state) => state.auth.login_session_id);
 
   const isLoggedIn = !!token;
 
   const loginUser = (userData) => {
+    // ✅ Decode JWT and extract email if backend didn’t send
+    let extractedEmail = null;
+    if (userData.token) {
+      const decoded = decodeJwt(userData.token);
+      extractedEmail = decoded?.user_data?.email?.[0] || null;
+    }
+
+    if (!userData.email && extractedEmail) {
+      userData.email = extractedEmail;
+    }
+
+    if (!userData.email) {
+      console.warn('⚠️ No email found for user:', userData.name);
+    }
+
+    // ✅ Dispatch Redux login
     dispatch(login({ user: userData, token: userData.token }));
-    localStorage.setItem('name', JSON.stringify(userData.name));
-    localStorage.setItem('group', JSON.stringify(userData.group));
-    localStorage.setItem('job_title', JSON.stringify(userData.job_title));
-    localStorage.setItem('token', userData.token);
-    localStorage.setItem('login_session_id', JSON.stringify(loginSessionId));
+
+    // ✅ Persist to localStorage
+    localStorage.setItem('name', JSON.stringify(userData.name || ''));
+    localStorage.setItem('group', JSON.stringify(userData.group || ''));
+    localStorage.setItem('email', JSON.stringify(userData.email || ''));
+    localStorage.setItem('job_title', JSON.stringify(userData.job_title || ''));
+    localStorage.setItem('token', userData.token || '');
+    localStorage.setItem('login_session_id', JSON.stringify(loginSessionId || ''));
   };
 
   const logoutUser = () => {
     dispatch(logout());
+    localStorage.clear(); // ✅ Completely clear storage on logout
   };
 
-  //const storeSession = (session_id) => {
-    //dispatch(storeSessionId(session_id));
-    //localStorage.setItem('session_id', session_id);
-  //};
-
   const storeLoginSessionId = (id) => {
-    localStorage.setItem('login_session_id', JSON.stringify(id)); // <-- UPDATE LOCALSTORAGE KEY
-    dispatch(setLoginSessionId(id)); // <-- USE NEW REDUCER
+    localStorage.setItem('login_session_id', JSON.stringify(id));
+    dispatch(setLoginSessionId(id));
   };
 
   const updateToken = (newToken) => {
     dispatch(setToken(newToken));
+    localStorage.setItem('token', newToken); // ✅ Keep token persistent
   };
 
   const clearToken = () => {
     dispatch(removeToken());
+    localStorage.removeItem('token');
   };
 
   return {
@@ -56,8 +91,6 @@ const useAuth = () => {
     logoutUser,
     updateToken,
     clearToken,
-    //storeSession,
-    loginSessionId,
     storeLoginSessionId,
   };
 };
