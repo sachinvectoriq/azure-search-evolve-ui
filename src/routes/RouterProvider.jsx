@@ -7,6 +7,7 @@ import QuickTour from '../pages/QuickTour'
 import SettingPage from '../pages/SettingPage';
 import Report from '../pages/Report';
 import App from '../App';
+import ProtectedRoute from './ProtectedRoute';
 
 const RouterProvider = () => {
   return (
@@ -18,7 +19,14 @@ const RouterProvider = () => {
           <Route path='dashboard' element={<Dashboard />} />
           <Route path='settings' element={<SettingPage />} />
           <Route path='quick-tour' element={<QuickTour />} />
-          <Route path='reports' element={<Report />} />
+          <Route
+            path='reports'
+            element={
+              <ProtectedRoute requireReportsAccess={true}>
+                <Report />
+              </ProtectedRoute>
+            }
+          />
         </Route>
         <Route path='*' element={<NotFound />} />
       </Route>
