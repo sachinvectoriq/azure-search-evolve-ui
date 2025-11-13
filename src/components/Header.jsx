@@ -61,18 +61,19 @@ const Header = () => {
   // ✅ Report Access Check (same logic as OBE)
   useEffect(() => {
   const fetchReportAccess = async () => {
-    // ✅ Get email from Redux OR localStorage (for reloads)
     const storedEmail = JSON.parse(localStorage.getItem('email') || 'null');
     const emailToCheck = user?.email || storedEmail;
 
     // Admins always have access
     if (user?.group === "admin" || localStorage.getItem('group')?.includes("admin")) {
       setHasReportAccess(true);
+      localStorage.setItem("hasReportAccess", "true");
       return;
     }
 
     if (!emailToCheck) {
       setHasReportAccess(false);
+      localStorage.setItem("hasReportAccess", "false");
       return;
     }
 
@@ -87,16 +88,18 @@ const Header = () => {
       );
 
       setHasReportAccess(allowed);
+      localStorage.setItem("hasReportAccess", JSON.stringify(allowed)); // <-- REQUIRED
     } catch (error) {
       console.error("Error checking report access:", error);
       setHasReportAccess(false);
+      localStorage.setItem("hasReportAccess", "false");
     }
   };
 
-  // Delay slightly so useAuth finishes restoring user first
   const timer = setTimeout(fetchReportAccess, 300);
   return () => clearTimeout(timer);
 }, [user?.email, user?.group]);
+
 
 
   // Close dropdown on outside click
